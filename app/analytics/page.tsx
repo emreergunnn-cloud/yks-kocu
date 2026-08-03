@@ -11,7 +11,6 @@ import { SectionBarChart } from "../../components/analytics/SectionBarChart";
 import { ProgressDonut } from "../../components/analytics/ProgressDonut";
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 import { Card } from "../../components/ui/Card";
-import { Badge } from "../../components/ui/Badge";
 
 export default function AnalyticsPage() {
   const { user, userProfile } = useAuth();
@@ -35,12 +34,9 @@ export default function AnalyticsPage() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Performans & Detaylı İstatistikler
-            </h1>
-            <Badge variant="primary">Phase 3 Analytics</Badge>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+            Performans & Detaylı İstatistikler
+          </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             TYT/AYT net trendleriniz, bölüm bazlı başarı yüzdeleriniz ve hedef analiziniz.
           </p>
@@ -69,7 +65,7 @@ export default function AnalyticsPage() {
               <Card className="lg:col-span-2 space-y-4">
                 <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    Ders Bazlı Başarı Başarı Yüzdeleri
+                    Ders Bazlı Başarı Yüzdeleri
                   </h3>
                   <p className="text-xs text-slate-500">Her ders için ortalama netleriniz ve doluluk yüzdesi</p>
                 </div>

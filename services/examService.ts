@@ -38,7 +38,7 @@ export function buildSectionScore(dogru: number, yanlis: number, totalQuestions:
 /**
  * Fetch all exam results for a user sorted by timestamp descending
  */
-export async function getExamResults(uid: string): Promise<ExamResult[]> {
+export async function getExamResults(uid: string, limit?: number): Promise<ExamResult[]> {
   try {
     const q = query(
       collection(db, "exam_results"),
@@ -53,7 +53,7 @@ export async function getExamResults(uid: string): Promise<ExamResult[]> {
         ...(document.data() as ExamResult),
       });
     });
-    return results;
+    return limit ? results.slice(0, limit) : results;
   } catch (error) {
     console.error("getExamResults error:", error);
     // Fallback un-indexed fetch if compound index is building
@@ -70,11 +70,12 @@ export async function getExamResults(uid: string): Promise<ExamResult[]> {
           ...(document.data() as ExamResult),
         });
       });
-      return results.sort((a, b) => {
+      const sorted = results.sort((a, b) => {
         const tA = a.createdAt?.seconds || 0;
         const tB = b.createdAt?.seconds || 0;
         return tB - tA;
       });
+      return limit ? sorted.slice(0, limit) : sorted;
     } catch (fallbackError) {
       console.error("Fallback getExamResults error:", fallbackError);
       return [];

@@ -6,6 +6,8 @@ import { useAuth } from "../../context/AuthContext";
 import { AppLayout } from "../../components/layout/AppLayout";
 import { getExamResults } from "../../services/examService";
 import { computeAnalyticsSummary } from "../../services/analyticsService";
+import { getTopicProgress } from "../../services/topicService";
+import { ensureDailyNotifications } from "../../services/notificationService";
 import { ExamResult } from "../../types/exam";
 import { YksCountdown } from "../../components/analytics/YksCountdown";
 import { TrendLineChart } from "../../components/analytics/TrendLineChart";
@@ -16,6 +18,7 @@ import { ExamCard } from "../../components/deneme/ExamCard";
 import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 import { Card } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
+import { YKS_SUBJECTS } from "../../lib/constants/subjects";
 
 export default function DashboardPage() {
   const { user, userProfile } = useAuth();
@@ -23,12 +26,22 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.uid) {
-      getExamResults(user.uid)
-        .then((data) => setExams(data))
-        .catch((err) => console.error("Error loading dashboard exams:", err))
-        .finally(() => setLoading(false));
-    }
+    if (!user?.uid) return;
+    Promise.all([
+      getExamResults(user.uid),
+      getTopicProgress(user.uid),
+    ])
+      .then(([data, progressMap]) => {
+        setExams(data);
+        // Count completed topics for daily notifications
+        const completed = YKS_SUBJECTS.reduce(
+          (acc, s) => acc + s.topics.filter((t) => progressMap[s.id]?.[t.id] === "Tamamlandı").length,
+          0
+        );
+        ensureDailyNotifications(user.uid, completed, data.length).catch(() => {});
+      })
+      .catch((err) => console.error("Error loading dashboard:", err))
+      .finally(() => setLoading(false));
   }, [user]);
 
   const summary = useMemo(() => {

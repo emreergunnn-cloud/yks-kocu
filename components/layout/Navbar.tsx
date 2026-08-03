@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { UserMenu } from "./UserMenu";
+import { NotificationBell } from "./NotificationBell";
 
 interface NavbarProps {
   onToggleSidebar?: () => void;
@@ -34,7 +35,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
           </Link>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <NotificationBell />
           <UserMenu />
         </div>
       </div>

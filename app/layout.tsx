@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../context/AuthContext";
+import { ThemeProvider } from "../components/settings/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,8 +15,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "YKS Koçu - YKS Takip ve Danışmanlık",
-  description: "YKS deneme takibi, net analizi ve kişiselleştirilmiş öğrenci danışmanlığı",
+  title: {
+    default: "YKS Koçu",
+    template: "%s | YKS Koçu",
+  },
+  description: "YKS deneme takibi, konu takibi ve kişiselleştirilmiş çalışma planı",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "YKS Koçu",
+  },
+  formatDetection: { telephone: false },
+  openGraph: {
+    title: "YKS Koçu",
+    description: "YKS deneme takibi, net analizi ve kişiselleştirilmiş öğrenci danışmanlığı",
+    type: "website",
+    locale: "tr_TR",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2563eb",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -29,7 +53,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   );

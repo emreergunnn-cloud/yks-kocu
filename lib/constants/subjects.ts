@@ -23,7 +23,7 @@ export const YKS_SUBJECTS: SubjectWithTopics[] = [
       { id: "t_ses_bilgisi", name: "Ses Bilgisi" },
       { id: "t_yazim_kurallari", name: "Yazım Kuralları" },
       { id: "t_noktalama", name: "Noktalama İşaretleri" },
-      { id: "t_sozcuk_turleri", name: "Sözcük Türleri (Isım, Sıfat, Zamir, Zarf, Edat, Bağlaç)" },
+      { id: "t_sozcuk_turleri", name: "Sözcük Türleri (İsim, Sıfat, Zamir, Zarf, Edat, Bağlaç)" },
       { id: "t_fiiller", name: "Fiiller ve Fiilimsiler" },
       { id: "t_cumle_bilgisi", name: "Cümlenin Ögeleri ve Cümle Türleri" },
       { id: "t_anlam_bozuklugu", name: "Anlatım Bozuklukları" },

@@ -1,7 +1,16 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { User as FirebaseUser, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import {
+  User as FirebaseUser,
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signOut,
+  updateProfile,
+} from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, provider, db } from "../lib/firebase";
 import { UserProfile } from "../types/user";
@@ -11,6 +20,9 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  registerWithEmail: (name: string, email: string, password: string) => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUserProfile: () => Promise<void>;
 }
@@ -20,6 +32,9 @@ const AuthContext = createContext<AuthContextType>({
   userProfile: null,
   loading: true,
   signInWithGoogle: async () => {},
+  signInWithEmail: async () => {},
+  registerWithEmail: async () => {},
+  sendPasswordReset: async () => {},
   logout: async () => {},
   refreshUserProfile: async () => {},
 });
@@ -31,76 +46,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfile = async (uid: string) => {
     try {
-      const userRef = doc(db, "users", uid);
-      const docSnap = await getDoc(userRef);
-      if (docSnap.exists()) {
-        setUserProfile(docSnap.data() as UserProfile);
+      const snap = await getDoc(doc(db, "users", uid));
+      if (snap.exists()) {
+        setUserProfile(snap.data() as UserProfile);
       } else {
         setUserProfile(null);
       }
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
+    } catch {
+      // silent
     }
   };
 
   const refreshUserProfile = async () => {
-    if (user?.uid) {
-      await fetchUserProfile(user.uid);
-    }
+    if (user?.uid) await fetchUserProfile(user.uid);
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsub = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        await fetchUserProfile(currentUser.uid);
-      } else {
-        setUserProfile(null);
-      }
+      if (currentUser) await fetchUserProfile(currentUser.uid);
+      else setUserProfile(null);
       setLoading(false);
     });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
   const signInWithGoogle = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const result = await signInWithPopup(auth, provider);
       setUser(result.user);
       await fetchUserProfile(result.user.uid);
-    } catch (error) {
-      console.error("Google sign in error:", error);
-      throw error;
     } finally {
       setLoading(false);
     }
+  };
+
+  const signInWithEmail = async (email: string, password: string) => {
+    setLoading(true);
+    try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      setUser(result.user);
+      await fetchUserProfile(result.user.uid);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const registerWithEmail = async (name: string, email: string, password: string) => {
+    setLoading(true);
+    try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(result.user, { displayName: name });
+      await setDoc(doc(db, "users", result.user.uid), {
+        uid: result.user.uid,
+        adSoyad: name,
+        email: email,
+        sinif: "",
+        alan: "",
+        hedefBolum: "",
+        hedefSiralama: "",
+        createdAt: new Date(),
+      });
+      setUser(result.user);
+      await fetchUserProfile(result.user.uid);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
   };
 
   const logout = async () => {
-    try {
-      setLoading(true);
-      await signOut(auth);
-      setUser(null);
-      setUserProfile(null);
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
-      setLoading(false);
-    }
+    await signOut(auth);
+    setUser(null);
+    setUserProfile(null);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        userProfile,
-        loading,
-        signInWithGoogle,
-        logout,
-        refreshUserProfile,
-      }}
-    >
+    <AuthContext.Provider value={{
+      user, userProfile, loading,
+      signInWithGoogle, signInWithEmail, registerWithEmail,
+      sendPasswordReset, logout, refreshUserProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   );
