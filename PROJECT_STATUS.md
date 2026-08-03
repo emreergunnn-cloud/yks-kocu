@@ -1,21 +1,20 @@
 # Project Status & Milestone Tracking
 
 **Project**: YKS Koçu  
-**Current Version**: `0.3.0-alpha` (Phase 2 Complete)  
+**Current Version**: `0.4.0-alpha` (Phase 3 Complete)  
 **Last Updated**: 2026-08-03  
 
 ---
 
 ## 1. Executive Summary Status
 
-Phase 2 (Core User & Exam Management) has been **100% completed and verified**. The application now includes:
-- **Student Profile Management**: Full editing for personal info, target university, target department, target ranking, and YKS graduation year.
-- **YKS Subject & Topic Database**: Comprehensive curriculum constants (`lib/constants/subjects.ts`) covering TYT and AYT subjects with question counts and official topic breakdowns.
-- **Practice Exam Management**: Complete CRUD operations (`services/examService.ts`) for practice exams with support for `TYT`, `AYT`, and `TYT+AYT` across all tracks (`Sayısal`, `Eşit Ağırlık`, `Sözel`, `Dil`).
-- **Automatic Net Calculation**: Real-time $Net = \text{Doğru} - \frac{\text{Yanlış}}{4}$ computation with section score tracking (Doğru, Yanlış, Boş, Net).
-- **UI Components & States**: Built with shadcn/ui design standards including `Card`, `Badge`, `EmptyState`, `LoadingSpinner`, and delete confirmation modals.
+Phase 3 (Analytics & Performance Dashboard) has been **100% completed and verified**. The application now features:
+- **Main Dashboard (`/dashboard`)**: Welcome banner, YKS Countdown Timer, Quick Stats Metrics (Total Exams, Average TYT Net, Average AYT Net, Overall Net Average), Trend Chart Preview, Section Bar Chart, Goal Tracker, Progress Donut, and Recent Exam Feed.
+- **Analytics & Trend Analysis (`/analytics`)**: Detailed TYT & AYT Net Progression Line Chart (SVG), subject section success percentages, target reachability donut, and goal tracking.
+- **Visual Chart Components**: Built with lightweight, zero-dependency SVG & Tailwind v4 (`TrendLineChart`, `SectionBarChart`, `ProgressDonut`, `YksCountdown`, `GoalTracker`).
+- **Analytics Service (`services/analyticsService.ts`)**: Type-safe calculation service deriving trend points, section averages, target reachability percentage, and YKS countdown.
 
-Production build verification (`npm run build`) passed with zero errors (`7/7` pages rendered).
+Production build verification (`npm run build`) passed with zero errors (`9/9` static pages compiled).
 
 ---
 
@@ -23,16 +22,14 @@ Production build verification (`npm run build`) passed with zero errors (`7/7` p
 
 | Module / Area | Status | Progress | Notes / Next Actions |
 | :--- | :--- | :--- | :--- |
-| **Documentation & System Specs** | 🟢 Complete | 100% | PRD, Status, and `/docs` system complete. |
+| **Documentation & System Specs** | 🟢 Complete | 100% | PRD, Status, Roadmap, and `/docs` system updated. |
 | **Foundation & Auth Infrastructure** | 🟢 Complete | 100% | Phase 1 deliverables operational. |
-| **Student Profile & Targets (`app/profile`)** | 🟢 Complete | 100% | Editable university, department, ranking, graduation year. |
-| **YKS Subjects & Topics (`lib/constants`)** | 🟢 Complete | 100% | Official OSYM YKS topic database constants created. |
-| **Exam Management & CRUD (`services/examService`)** | 🟢 Complete | 100% | Full create, read, edit, delete capabilities. |
-| **Net Score Calculator ($D - Y/4$)** | 🟢 Complete | 100% | Real-time section score breakdown (Doğru, Yanlış, Boş, Net). |
-| **Practice Exam History & List (`app/deneme`)** | 🟢 Complete | 100% | Filtering (Hepsi, TYT, AYT), averages, cards & empty state. |
-| **Create Practice Exam (`app/deneme/ekle`)** | 🟢 Complete | 100% | Multi-track practice exam creation page. |
-| **Edit Practice Exam (`app/deneme/[id]/duzenle`)** | 🟢 Complete | 100% | Practice exam edit route with initial score populating. |
-| **Dashboard & Analytics (`/dashboard`)** | 🔴 Pending | 0% | Scheduled for Phase 3. |
+| **Student Profile & Targets (`app/profile`)** | 🟢 Complete | 100% | Phase 2 deliverables operational. |
+| **Exam Management & Net Calculation** | 🟢 Complete | 100% | Phase 2 deliverables operational. |
+| **Main Dashboard (`app/dashboard`)** | 🟢 Complete | 100% | YKS Countdown, Quick Stats, Trend Preview, Feed. |
+| **Analytics & Trends (`app/analytics`)** | 🟢 Complete | 100% | Net trend line chart, section bars, target donut. |
+| **Analytics Service (`services/analyticsService`)** | 🟢 Complete | 100% | Section averages, trend points, countdown logic. |
+| **Goal Tracker Component** | 🟢 Complete | 100% | Daily, weekly, monthly study goal tracking. |
 | **Curriculum Topic Tracker (`/konular`)** | 🔴 Pending | 0% | Scheduled for Phase 4. |
 | **Study Planner & AI Coach (`/program`)** | 🔴 Pending | 0% | Scheduled for Phase 5. |
 
@@ -40,4 +37,4 @@ Production build verification (`npm run build`) passed with zero errors (`7/7` p
 
 ## 3. Next Milestone
 
-- **Milestone 3**: Phase 3 — Analytics & Performance Dashboard (Net trend charts, score progression, target gap analysis, YKS countdown timer).
+- **Milestone 4**: Phase 4 — Subject & Topic Mastery Tracking (Complete YKS topic checklist, status toggles: `Tamamlandı`, `Tekrar Edilecek`, `Başlanmadı`, Firestore persistence).
