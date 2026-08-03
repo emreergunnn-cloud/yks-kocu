@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function ForgotPasswordRoute() {
-  return <LoginPage />;
+  return <LoginPage initialMode="forgot" />;
 }
