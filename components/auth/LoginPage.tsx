@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -56,12 +56,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode = "login" }) =
   const [error, setError] = useState("");
   const [resetSent, setResetSent] = useState(false);
 
-  // Redirect already-authenticated users away from auth pages immediately
-  useEffect(() => {
-    if (user) {
-      router.replace("/dashboard");
-    }
-  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,10 +71,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode = "login" }) =
     try {
       if (mode === "login") {
         await signInWithEmail(email, password);
-        // AuthContext sets user → useEffect above triggers redirect
+router.replace("/dashboard");
       } else if (mode === "register") {
         await registerWithEmail(name, email, password);
-        // AuthContext sets user → useEffect above triggers redirect
+router.replace("/dashboard");
       } else {
         // Forgot password — sendPasswordResetEmail throws on unknown emails
         await sendPasswordReset(email);
@@ -105,7 +99,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode = "login" }) =
     setLoading(true);
     try {
       await signInWithGoogle();
-      // AuthContext sets user → useEffect above triggers redirect
+router.replace("/dashboard");
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message ?? "";
       if (msg.includes("popup-closed-by-user") || msg.includes("cancelled-popup-request")) {
