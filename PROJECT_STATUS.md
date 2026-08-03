@@ -1,7 +1,7 @@
 # Project Status & Milestone Tracking
 
 **Project**: YKS Koçu  
-**Current Version**: `1.0.0-rc` (All Milestones Complete)  
+**Current Version**: `1.0.1` (Bug Fix Sprint Complete)  
 **Last Updated**: 2026-08-03  
 
 ---
@@ -74,8 +74,23 @@ Routes verified:
 
 ---
 
-## 4. Next Steps (Post v1.0)
+## 4. Bug Fix Sprint v1.0.1 (2026-08-03)
 
+| Bug | Fix | File(s) |
+|:---|:---|:---|
+| Login stays on `/login` after success | `useEffect` watches `user` state → `router.replace("/dashboard")` | `LoginPage.tsx` |
+| Register stays on `/register` after success | Same `useEffect` redirect mechanism | `LoginPage.tsx` |
+| Forgot password shows success before Firebase confirms | Success screen (`resetSent`) shown only after `sendPasswordReset` resolves | `LoginPage.tsx` |
+| Forgot password error messages too generic | Mode-aware `mapAuthError()` — e.g. "user-not-found" shows different message for reset vs login | `LoginPage.tsx` |
+| ProtectedRoute shows inline login widget | Replaced with `router.replace("/login")` redirect | `ProtectedRoute.tsx` |
+| Missing Firestore composite index | Created `firestore.indexes.json` with `uid+createdAt` index for `exam_results` | `firestore.indexes.json` |
+| FIREBASE.md missing index docs | Added Section 5 (index table, deploy command) and Section 6 (auth flow table) | `docs/FIREBASE.md` |
+
+---
+
+## 5. Next Steps (Post v1.0.1)
+
+- Deploy `firestore.indexes.json` via `npx firebase-tools@latest deploy --only firestore:indexes`
 - Firebase Hosting or Vercel deployment
 - Android/iOS packaging (Capacitor or React Native)
 - Leaderboard feature (optional, Phase 6)

@@ -3,7 +3,7 @@
 ## 1. Firebase Project Overview
 
 - **Project ID**: `yks-kocu-cfd78`
-- **Auth Provider**: Google OAuth (`GoogleAuthProvider`)
+- **Auth Providers**: Email/Password + Google OAuth (`GoogleAuthProvider`)
 - **Database**: Cloud Firestore
 - **Storage Bucket**: `yks-kocu-cfd78.firebasestorage.app`
 
@@ -50,24 +50,23 @@ export const db = getFirestore(app);
 
 ---
 
-## 4. Firestore Security Rules Specification (`firestore.rules`)
+## 4. Firestore Security Rules (`firestore.rules`)
 
 ```javascript
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // User profile rule: Users can read/write only their own document
+
+    // Users can read/write only their own document and subcollections
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // User subcollections rule (exam_results, topic_progress, study_schedules)
+
       match /{subcollection=**} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
     }
-    
-    // Legacy exam_results collection rule (backward compatibility)
+
+    // Legacy top-level exam_results collection
     match /exam_results/{examId} {
       allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
@@ -75,3 +74,52 @@ service cloud.firestore {
   }
 }
 ```
+
+---
+
+## 5. Firestore Composite Indexes (`firestore.indexes.json`)
+
+The following composite indexes are required and defined in `firestore.indexes.json` at the project root.
+
+### Why they're needed
+
+Firestore requires a **composite index** whenever a query combines `where()` on one field with `orderBy()` on a different field.
+
+### Required Indexes
+
+| Collection | Fields | Direction | Used By |
+|:---|:---|:---|:---|
+| `exam_results` | `uid` → `createdAt` | ASC → DESC | `examService.getExamResults()` |
+| `exam_results` | `uid` → `examType` → `createdAt` | ASC → ASC → DESC | Future filtered exam queries |
+
+### Deploy Indexes
+
+After cloning the repo, deploy the indexes to Firebase with:
+
+```bash
+npx firebase-tools@latest deploy --only firestore:indexes
+```
+
+> **Note**: Newly created indexes take a few minutes to build on the Firebase console. During this time, queries using those indexes will return an error with a direct link to create the index — clicking it opens Firebase Console with the index pre-filled.
+
+### Single-Field Indexes (Auto-Managed)
+
+These are automatically indexed by Firestore and do **not** require entries in `firestore.indexes.json`:
+
+- `users` → `createdAt DESC` (admin user list)
+- `users/{uid}/notifications` → `createdAt DESC` (notification feed)
+- `users/{uid}/studySessions` → `startTime ASC` (streak computation)
+
+---
+
+## 6. Authentication Flow
+
+| Action | Implementation | Redirect |
+|:---|:---|:---|
+| Email login | `signInWithEmailAndPassword` | `/dashboard` |
+| Google login | `signInWithPopup` | `/dashboard` |
+| Registration | `createUserWithEmailAndPassword` + Firestore user doc | `/dashboard` |
+| Forgot password | `sendPasswordResetEmail` | Shows success screen (no redirect) |
+| Logout | `signOut` | `/login` |
+| Protected route (unauthenticated) | `ProtectedRoute` guard | `/login` |
+| Auth page (already authenticated) | `LoginPage` `useEffect` | `/dashboard` |
