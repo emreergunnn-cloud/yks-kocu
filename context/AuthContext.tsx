@@ -99,15 +99,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const result = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(result.user, { displayName: name });
       await setDoc(doc(db, "users", result.user.uid), {
-        uid: result.user.uid,
-        adSoyad: name,
-        email: email,
-        sinif: "",
-        alan: "",
-        hedefBolum: "",
-        hedefSiralama: "",
-        createdAt: new Date(),
-      });
+  uid: result.user.uid,
+
+  adSoyad: name,
+  email: email,
+
+  role: "student",
+
+  onboardingCompleted: false,
+
+  sinif: "",
+  alan: "",
+
+  hedefUniversite: "",
+  hedefBolum: "",
+  hedefSiralama: 0,
+
+  diplomaNotu: 0,
+  obp: 0,
+
+  currentTYT: 0,
+  currentAYT: 0,
+
+  targetTYT: 0,
+  targetAYT: 0,
+
+  studyDays: 0,
+  studyHours: 0,
+
+  examYear: new Date().getFullYear() + 1,
+
+  createdAt: new Date(),
+  updatedAt: new Date(),
+});
       setUser(result.user);
       await fetchUserProfile(result.user.uid);
     } finally {

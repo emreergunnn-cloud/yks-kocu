@@ -74,7 +74,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ initialMode = "login" }) =
 router.replace("/dashboard");
       } else if (mode === "register") {
         await registerWithEmail(name, email, password);
-router.replace("/dashboard");
+router.replace("/onboarding");
       } else {
         // Forgot password — sendPasswordResetEmail throws on unknown emails
         await sendPasswordReset(email);

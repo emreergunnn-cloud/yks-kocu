@@ -26,6 +26,14 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+  if (!userProfile) return;
+
+  if (!userProfile.onboardingCompleted) {
+    window.location.href = "/onboarding";
+  }
+}, [userProfile]);
+
+  useEffect(() => {
     if (!user?.uid) return;
     Promise.all([
       getExamResults(user.uid),
