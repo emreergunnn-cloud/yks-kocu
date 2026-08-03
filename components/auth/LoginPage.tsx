@@ -6,9 +6,14 @@ import { BookOpen, Mail, Lock, User, ArrowRight, Eye, EyeOff, RotateCcw } from "
 
 type AuthMode = "login" | "register" | "forgot";
 
-export const LoginPage: React.FC = () => {
+interface LoginPageProps {
+  /** Set the initial form mode. Defaults to "login". */
+  initialMode?: AuthMode;
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({ initialMode = "login" }) => {
   const { signInWithGoogle, signInWithEmail, registerWithEmail, sendPasswordReset } = useAuth();
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +31,7 @@ export const LoginPage: React.FC = () => {
       if (mode === "login") {
         await signInWithEmail(email, password);
       } else if (mode === "register") {
-        if (!name.trim()) { setError("Ad Soyad zorunludur."); return; }
+        if (!name.trim()) { setError("Ad Soyad zorunludur."); setLoading(false); return; }
         await registerWithEmail(name, email, password);
       } else {
         await sendPasswordReset(email);
@@ -42,6 +47,12 @@ export const LoginPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const switchMode = (next: AuthMode) => {
+    setMode(next);
+    setError("");
+    setSuccessMsg("");
   };
 
   return (
@@ -68,7 +79,12 @@ export const LoginPage: React.FC = () => {
           {mode !== "forgot" && (
             <>
               <button
-                onClick={async () => { setLoading(true); try { await signInWithGoogle(); } catch { setError("Google girişi başarısız."); } finally { setLoading(false); } }}
+                onClick={async () => {
+                  setLoading(true);
+                  try { await signInWithGoogle(); }
+                  catch { setError("Google girişi başarısız."); }
+                  finally { setLoading(false); }
+                }}
                 disabled={loading}
                 className="w-full flex items-center justify-center gap-3 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium py-2.5 px-4 rounded-xl transition-all text-sm disabled:opacity-50"
               >
@@ -151,7 +167,13 @@ export const LoginPage: React.FC = () => {
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-medium py-2.5 px-4 rounded-xl shadow-md shadow-blue-500/20 transition-all text-sm disabled:opacity-50"
             >
-              {loading ? "İşleniyor..." : mode === "login" ? "Giriş Yap" : mode === "register" ? "Hesap Oluştur" : "Şifre Sıfırla"}
+              {loading
+                ? "İşleniyor..."
+                : mode === "login"
+                ? "Giriş Yap"
+                : mode === "register"
+                ? "Hesap Oluştur"
+                : "Şifre Sıfırla"}
               {!loading && <ArrowRight className="w-4 h-4" />}
             </button>
           </form>
@@ -160,12 +182,18 @@ export const LoginPage: React.FC = () => {
           <div className="space-y-2 text-center text-xs">
             {mode === "login" && (
               <>
-                <button onClick={() => { setMode("forgot"); setError(""); }} className="text-blue-600 dark:text-blue-400 hover:underline block w-full">
+                <button
+                  onClick={() => switchMode("forgot")}
+                  className="text-blue-600 dark:text-blue-400 hover:underline block w-full"
+                >
                   Şifremi Unuttum
                 </button>
                 <p className="text-slate-500">
                   Hesabın yok mu?{" "}
-                  <button onClick={() => { setMode("register"); setError(""); }} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                  <button
+                    onClick={() => switchMode("register")}
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
                     Kayıt Ol
                   </button>
                 </p>
@@ -174,13 +202,19 @@ export const LoginPage: React.FC = () => {
             {mode === "register" && (
               <p className="text-slate-500">
                 Zaten hesabın var mı?{" "}
-                <button onClick={() => { setMode("login"); setError(""); }} className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                <button
+                  onClick={() => switchMode("login")}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                >
                   Giriş Yap
                 </button>
               </p>
             )}
             {mode === "forgot" && (
-              <button onClick={() => { setMode("login"); setError(""); setSuccessMsg(""); }} className="flex items-center justify-center gap-1 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 w-full">
+              <button
+                onClick={() => switchMode("login")}
+                className="flex items-center justify-center gap-1 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 w-full"
+              >
                 <RotateCcw className="w-3 h-3" /> Giriş sayfasına dön
               </button>
             )}

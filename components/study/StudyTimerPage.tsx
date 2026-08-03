@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { getUserSettings, UserSettings, DEFAULT_SETTINGS } from "../../services/settingsService";
+import { recordStudyActivity } from "../../services/streakService";
 
 type PomodoroMode = "pomodoro" | "short_break" | "long_break";
 type Preset = { label: string; work: number; short: number; long: number };
@@ -124,6 +125,8 @@ export const StudyTimerPage: React.FC = () => {
     try {
       await addDoc(collection(db, "users", user.uid, "studySessions"), sessionData);
       setSavedSessions((prev) => [{ subject: subject || "Genel", duration: secs, ts: new Date() }, ...prev.slice(0, 4)]);
+      // Record streak activity
+      await recordStudyActivity(user.uid).catch(() => {});
     } catch {}
   };
 
