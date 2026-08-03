@@ -8,8 +8,10 @@ export interface UserProfile {
   photoURL?: string | null;
   sinif: SinifOption | "";
   alan: AlanOption | "";
+  hedefUniversite?: string;
   hedefBolum: string;
   hedefSiralama: number | string;
+  mezuniyetYili?: number | string;
   createdAt: any;
   updatedAt?: any;
 }

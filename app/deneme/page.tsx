@@ -1,158 +1,156 @@
 "use client";
 
-import { useState } from "react";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
-import { db } from "../../lib/firebase";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import { AppLayout } from "../../components/layout/AppLayout";
+import { ExamResult, ExamType } from "../../types/exam";
+import { getExamResults, deleteExamResult } from "../../services/examService";
+import { ExamCard } from "../../components/deneme/ExamCard";
+import { EmptyState } from "../../components/ui/EmptyState";
+import { LoadingSpinner } from "../../components/ui/LoadingSpinner";
 
-export default function DenemePage() {
+export default function DenemeHistoryPage() {
   const { user } = useAuth();
+  const [exams, setExams] = useState<ExamResult[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filterType, setFilterType] = useState<"ALL" | ExamType>("ALL");
 
-  const [tytTurkce, setTytTurkce] = useState("");
-  const [tytSosyal, setTytSosyal] = useState("");
-  const [tytMat, setTytMat] = useState("");
-  const [tytFen, setTytFen] = useState("");
-
-  const [aytMat, setAytMat] = useState("");
-  const [aytFizik, setAytFizik] = useState("");
-  const [aytKimya, setAytKimya] = useState("");
-  const [aytBiyoloji, setAytBiyoloji] = useState("");
-
-  const [saving, setSaving] = useState(false);
-
-  const kaydet = async () => {
-    if (!user) {
-      alert("Önce giriş yapın.");
-      return;
-    }
-
-    setSaving(true);
+  const fetchExams = async () => {
+    if (!user) return;
+    setLoading(true);
     try {
-      await addDoc(collection(db, "exam_results"), {
-        uid: user.uid,
-
-        tytTurkce: Number(tytTurkce),
-        tytSosyal: Number(tytSosyal),
-        tytMat: Number(tytMat),
-        tytFen: Number(tytFen),
-
-        aytMat: Number(aytMat),
-        aytFizik: Number(aytFizik),
-        aytKimya: Number(aytKimya),
-        aytBiyoloji: Number(aytBiyoloji),
-
-        createdAt: Timestamp.now(),
-      });
-
-      alert("Deneme kaydedildi");
-      setTytTurkce("");
-      setTytSosyal("");
-      setTytMat("");
-      setTytFen("");
-      setAytMat("");
-      setAytFizik("");
-      setAytKimya("");
-      setAytBiyoloji("");
-    } catch (error) {
-      console.error("Deneme kaydetme hatası:", error);
-      alert("Deneme kaydedilirken bir hata oluştu.");
+      const data = await getExamResults(user.uid);
+      setExams(data);
+    } catch (err) {
+      console.error("Fetch exams error:", err);
     } finally {
-      setSaving(false);
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchExams();
+  }, [user]);
+
+  const handleDeleteExam = async (id: string) => {
+    await deleteExamResult(id);
+    setExams((prev) => prev.filter((e) => e.id !== id));
+  };
+
+  const filteredExams = exams.filter((e) => {
+    if (filterType === "ALL") return true;
+    return e.denemeTipi === filterType || e.denemeTipi === "TYT+AYT";
+  });
+
+  const avgTyt = exams.length
+    ? (exams.reduce((acc, e) => acc + (e.tytToplamNet || 0), 0) / exams.length).toFixed(1)
+    : "0.0";
+  const avgAyt = exams.length
+    ? (exams.reduce((acc, e) => acc + (e.aytToplamNet || 0), 0) / exams.length).toFixed(1)
+    : "0.0";
+
   return (
     <AppLayout>
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm space-y-4">
+      <div className="space-y-6">
+        {/* Header Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Deneme Sonucu Ekle
+              Deneme Sınav Geçmişi
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              TYT ve AYT bölüm netlerinizi girin.
+              Girdiğiniz tüm TYT ve AYT deneme sınavlarının net sonuçları ve istatistikleri.
             </p>
           </div>
+          <Link
+            href="/deneme/ekle"
+            className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-medium px-5 py-2.5 rounded-xl shadow-md transition-all text-sm shrink-0"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Yeni Deneme Ekle
+          </Link>
+        </div>
 
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800 pb-2">
-              TYT Netleri
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                placeholder="TYT Türkçe"
-                type="number"
-                value={tytTurkce}
-                onChange={(e) => setTytTurkce(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-              <input
-                placeholder="TYT Sosyal"
-                type="number"
-                value={tytSosyal}
-                onChange={(e) => setTytSosyal(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-              <input
-                placeholder="TYT Matematik"
-                type="number"
-                value={tytMat}
-                onChange={(e) => setTytMat(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-              <input
-                placeholder="TYT Fen"
-                type="number"
-                value={tytFen}
-                onChange={(e) => setTytFen(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
+        {/* Quick Stats Grid */}
+        {exams.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Toplam Deneme</span>
+              <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+                {exams.length} <span className="text-xs font-normal text-slate-400">Adet</span>
+              </p>
             </div>
-
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800 pb-2 pt-2">
-              AYT Netleri
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <input
-                placeholder="AYT Matematik"
-                type="number"
-                value={aytMat}
-                onChange={(e) => setAytMat(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-              <input
-                placeholder="AYT Fizik"
-                type="number"
-                value={aytFizik}
-                onChange={(e) => setAytFizik(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-              <input
-                placeholder="AYT Kimya"
-                type="number"
-                value={aytKimya}
-                onChange={(e) => setAytKimya(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
-              <input
-                placeholder="AYT Biyoloji"
-                type="number"
-                value={aytBiyoloji}
-                onChange={(e) => setAytBiyoloji(e.target.value)}
-                className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              />
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Ortalama TYT Net</span>
+              <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                {avgTyt} <span className="text-xs font-normal text-slate-400">/ 120</span>
+              </p>
             </div>
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Ortalama AYT Net</span>
+              <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+                {avgAyt} <span className="text-xs font-normal text-slate-400">/ 80</span>
+              </p>
+            </div>
+          </div>
+        )}
 
+        {/* Filter Controls */}
+        {exams.length > 0 && (
+          <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
             <button
-              onClick={kaydet}
-              disabled={saving}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-medium py-3 px-4 rounded-xl shadow-md transition-all disabled:opacity-50 mt-4"
+              onClick={() => setFilterType("ALL")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                filterType === "ALL"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+              }`}
             >
-              {saving ? "Kaydediliyor..." : "Kaydet"}
+              Tüm Denemeler ({exams.length})
+            </button>
+            <button
+              onClick={() => setFilterType("TYT")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                filterType === "TYT"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+              }`}
+            >
+              TYT Denemeleri
+            </button>
+            <button
+              onClick={() => setFilterType("AYT")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                filterType === "AYT"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200"
+              }`}
+            >
+              AYT Denemeleri
             </button>
           </div>
-        </div>
+        )}
+
+        {/* Exam List Content */}
+        {loading ? (
+          <LoadingSpinner text="Deneme sınavları yükleniyor..." />
+        ) : filteredExams.length === 0 ? (
+          <EmptyState
+            title="Henüz Deneme Kaydı Yok"
+            description="Çalışma performansınızı ve net gelişiminizi takip etmek için ilk deneme sınavı sonucunuzu girin."
+            actionText="İlk Denemeni Ekle"
+            actionHref="/deneme/ekle"
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-4">
+            {filteredExams.map((exam) => (
+              <ExamCard key={exam.id} exam={exam} onDelete={handleDeleteExam} />
+            ))}
+          </div>
+        )}
       </div>
     </AppLayout>
   );

@@ -5,6 +5,7 @@ export type ExamType = "TYT" | "AYT" | "TYT+AYT";
 export interface SectionScore {
   dogru: number;
   yanlis: number;
+  bos: number;
   net: number;
 }
 
@@ -12,30 +13,36 @@ export interface ExamResult {
   id?: string;
   uid: string;
   yayinAdi?: string;
+  sinavAdi?: string;
   denemeTipi: ExamType;
   alan: AlanOption;
+  sinavTarihi?: string;
+  notlar?: string;
   
-  // Legacy flat fields for backward compatibility
-  tytTurkce?: number | SectionScore;
-  tytSosyal?: number | SectionScore;
-  tytMat?: number | SectionScore;
-  tytFen?: number | SectionScore;
+  // TYT Sections
+  tytTurkce?: SectionScore | number;
+  tytSosyal?: SectionScore | number;
+  tytMat?: SectionScore | number;
+  tytFen?: SectionScore | number;
 
-  aytMat?: number | SectionScore;
-  aytFizik?: number | SectionScore;
-  aytKimya?: number | SectionScore;
-  aytBiyoloji?: number | SectionScore;
-  aytEdebiyat?: number | SectionScore;
-  aytTarih1?: number | SectionScore;
-  aytCografya1?: number | SectionScore;
-  aytTarih2?: number | SectionScore;
-  aytCografya2?: number | SectionScore;
-  aytFelsefe?: number | SectionScore;
-  aytDin?: number | SectionScore;
-  aytDil?: number | SectionScore;
+  // AYT Sections
+  aytMat?: SectionScore | number;
+  aytFizik?: SectionScore | number;
+  aytKimya?: SectionScore | number;
+  aytBiyoloji?: SectionScore | number;
+  aytEdebiyat?: SectionScore | number;
+  aytTarih1?: SectionScore | number;
+  aytCografya1?: SectionScore | number;
+  aytTarih2?: SectionScore | number;
+  aytCografya2?: SectionScore | number;
+  aytFelsefe?: SectionScore | number;
+  aytDin?: SectionScore | number;
+  aytDil?: SectionScore | number;
 
-  tytToplamNet?: number;
-  aytToplamNet?: number;
-  toplamNet?: number;
+  tytToplamNet: number;
+  aytToplamNet: number;
+  toplamNet: number;
+  yksTahminiPuan?: number;
   createdAt: any;
+  updatedAt?: any;
 }
