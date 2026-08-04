@@ -1,5 +1,6 @@
 "use client";
 
+import { generateCoachReport } from "../../services/coachEngine";
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
@@ -59,6 +60,12 @@ export default function DashboardPage() {
   const recentExams = useMemo(() => {
     return exams.slice(0, 3);
   }, [exams]);
+
+const coachReport = useMemo(() => {
+  if (!userProfile) return null;
+
+  return generateCoachReport(userProfile, exams);
+}, [userProfile, exams]);
 
   return (
     <AppLayout>
@@ -224,6 +231,120 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {coachReport && (
+<Card className="p-6 mt-6">
+        <h2 className="text-xl font-bold mb-4">
+          🤖 AI Koç Analizi
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-4">
+
+          <div>
+            <p className="text-sm text-slate-500">
+              Hedefe Ulaşma Olasılığı
+            </p>
+
+            <p className="text-3xl font-bold text-blue-600">
+              %{coachReport?.targetProbability}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">
+              Risk
+            </p>
+
+            <p className="text-3xl font-bold">
+              {coachReport?.risk}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">
+              Hedef TYT
+            </p>
+
+            <p className="text-2xl font-semibold">
+              {coachReport?.targetTYT}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm text-slate-500">
+              Hedef AYT
+            </p>
+
+            <p className="text-2xl font-semibold">
+              {coachReport?.targetAYT}
+            </p>
+          </div>
+
+          <div>
+  <p className="text-sm text-slate-500">
+    Günlük Soru Hedefi
+  </p>
+
+  <p className="text-2xl font-semibold">
+    {coachReport?.dailyQuestionTarget} Soru
+  </p>
+</div>
+
+<div>
+  <p className="text-sm text-slate-500">
+    Haftalık Net Artışı
+  </p>
+
+  <p className="text-2xl font-semibold text-green-600">
+    +{coachReport?.weeklyNetIncrease} Net
+  </p>
+</div>
+
+<div>
+  <p className="text-sm text-slate-500">
+    Güçlü Ders
+  </p>
+
+  <p className="font-semibold">
+    {coachReport?.strongestLesson}
+  </p>
+</div>
+
+<div>
+  <p className="text-sm text-slate-500">
+    Geliştirilecek Ders
+  </p>
+
+  <p className="font-semibold text-red-500">
+    {coachReport?.weakestLesson}
+  </p>
+</div>
+
+        </div>
+
+        <div className="mt-6">
+          <h3 className="font-semibold mb-2">
+            Bugünkü Görevler
+          </h3>
+
+          <ul className="space-y-2">
+            {coachReport?.todayTasks.map((task, index) => (
+              <li key={index}>
+                • {task.title} ({task.duration} dk)
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="mt-6 rounded-xl bg-blue-50 dark:bg-slate-800 p-4">
+  <p className="font-medium text-slate-900 dark:text-white">
+    {coachReport?.coachMessage}
+  </p>
+</div>
+      </Card>
+      )}
     </AppLayout>
+
+    
   );
 }

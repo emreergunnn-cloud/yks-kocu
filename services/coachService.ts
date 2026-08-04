@@ -1,157 +1,393 @@
-import { ExamResult, SectionScore } from "../types/exam";
-import { TopicStatus } from "../types/topic";
-import { SubjectProgressMap } from "./topicService";
+export interface CoachInput {
+  alan: string;
+  targetRanking: number;
+  currentTYT: number;
+  currentAYT: number;
+  obp: number;
+  studyDays: number;
+  studyHours: number;
+}
+
+export interface DailyTask {
+  title: string;
+  duration: number;
+}
+
+export interface CoachReport {
+  targetProbability: number;
+  risk: "LOW" | "MEDIUM" | "HIGH";
+  targetTYT: number;
+  targetAYT: number;
+  recommendedDailyHours: number;
+  weakLessons: string[];
+  strongLessons: string[];
+  todayTasks: DailyTask[];
+  coachMessage: string;
+}
 
 export interface Recommendation {
   id: string;
-  type: "study" | "revision" | "exam" | "motivation";
   subject: string;
   topic?: string;
-  reason: string;
-  estimatedMinutes: number;
-  difficulty: "Kolay" | "Orta" | "Zor";
+
   priority: "Yüksek" | "Orta" | "Düşük";
+
+  type: "study" | "revision" | "exam" | "motivation";
+
+  estimatedMinutes: number;
+
+  difficulty: string;
+
+  reason: string;
+
   motivationSentence: string;
 }
 
-function getSectionNet(val: SectionScore | number | undefined): number {
-  if (!val) return 0;
-  if (typeof val === "number") return val;
-  return val.net ?? 0;
+function getTargetNet(ranking: number, alan: string) {
+  if (alan === "Sayısal") {
+    if (ranking <= 1000) return { tyt: 110, ayt: 74 };
+    if (ranking <= 5000) return { tyt: 104, ayt: 69 };
+    if (ranking <= 10000) return { tyt: 99, ayt: 64 };
+    if (ranking <= 30000) return { tyt: 92, ayt: 58 };
+    if (ranking <= 60000) return { tyt: 86, ayt: 52 };
+    if (ranking <= 100000) return { tyt: 80, ayt: 46 };
+
+    return { tyt: 74, ayt: 40 };
+  }
+
+  if (alan === "Eşit Ağırlık") {
+    if (ranking <= 5000) return { tyt: 95, ayt: 60 };
+    if (ranking <= 20000) return { tyt: 88, ayt: 52 };
+
+    return { tyt: 80, ayt: 45 };
+  }
+
+  if (alan === "Sözel") {
+    return { tyt: 82, ayt: 60 };
+  }
+
+  return {
+    tyt: 80,
+    ayt: 65,
+  };
 }
 
-function motivationFor(subject: string): string {
-  const msgs: Record<string, string> = {
-    "TYT Türkçe": "Her paragraf bir adım daha yakın!",
-    "TYT Matematik": "Sayılar seni bekliyor, hazır mısın?",
-    "TYT Fen Bilimleri": "Bilim dünyası kapılarını açıyor!",
-    "TYT Sosyal Bilimler": "Tarih ve coğrafya seni güçlendiriyor!",
-    "AYT Matematik": "İntegraller artık senin için!",
-    "AYT Fizik": "Kuvvetini hisset, fiziği fethet!",
-    "AYT Kimya": "Her molekül bir zafer!",
-    "AYT Biyoloji": "Hayat bilimleri seni bekliyor!",
-    "AYT Türk Dili ve Edebiyatı": "Edebiyat ruhu zenginleştirir!",
-  };
-  return msgs[subject] ?? "Hedefine bir adım daha yaklaş!";
+function getRecommendedHours(rank: number) {
+  if (rank <= 1000) return 8;
+  if (rank <= 5000) return 7;
+  if (rank <= 10000) return 6;
+  if (rank <= 30000) return 5;
+  if (rank <= 60000) return 4;
+
+  return 3;
 }
+
+export function generateCoachReport(
+  input: CoachInput
+): CoachReport {
+  const target = getTargetNet(
+    input.targetRanking,
+    input.alan
+  );
+
+  const current =
+    input.currentTYT +
+    input.currentAYT;
+
+  const goal =
+    target.tyt +
+    target.ayt;
+
+  let probability = Math.round(
+    (current / goal) * 100
+  );
+
+  probability += Math.floor(
+    input.obp / 100
+  );
+
+  if (
+    input.studyHours >=
+    getRecommendedHours(
+      input.targetRanking
+    )
+  ) {
+    probability += 10;
+  }
+
+  probability = Math.max(
+    5,
+    Math.min(99, probability)
+  );
+
+  let risk:
+    | "LOW"
+    | "MEDIUM"
+    | "HIGH" = "HIGH";
+
+  if (probability >= 80)
+    risk = "LOW";
+  else if (probability >= 55)
+    risk = "MEDIUM";
+
+  const weakLessons: string[] = [];
+  const strongLessons: string[] = [];
+
+  if (
+    input.currentTYT <
+    target.tyt
+  ) {
+    weakLessons.push("TYT");
+  } else {
+    strongLessons.push("TYT");
+  }
+
+  if (
+    input.currentAYT <
+    target.ayt
+  ) {
+    weakLessons.push("AYT");
+  } else {
+    strongLessons.push("AYT");
+  }
+
+  const todayTasks: DailyTask[] = [];
+
+  if (
+    weakLessons.includes("TYT")
+  ) {
+    todayTasks.push({
+      title:
+        "40 TYT Matematik",
+      duration: 60,
+    });
+
+    todayTasks.push({
+      title:
+        "30 Paragraf",
+      duration: 40,
+    });
+  }
+
+  if (
+    weakLessons.includes("AYT")
+  ) {
+    todayTasks.push({
+      title:
+        "AYT Branş Çalışması",
+      duration: 75,
+    });
+  }
+
+  todayTasks.push({
+    title: "Deneme Analizi",
+    duration: 30,
+  });
+    let coachMessage = "";
+
+  if (probability >= 80) {
+    coachMessage =
+      "Hedefin için doğru yoldasın. Tempoyu koru.";
+  } else if (probability >= 55) {
+    coachMessage =
+      "Hedefin ulaşılabilir. Düzenli çalışmaya devam et.";
+  } else {
+    coachMessage =
+      "Çalışma planını artırmalısın. Hedef için daha fazla net gerekiyor.";
+  }
+
+  return {
+    targetProbability: probability,
+
+    risk,
+
+    targetTYT: target.tyt,
+
+    targetAYT: target.ayt,
+
+    recommendedDailyHours:
+      getRecommendedHours(
+        input.targetRanking
+      ),
+
+    weakLessons,
+
+    strongLessons,
+
+    todayTasks,
+
+    coachMessage,
+  };
+}
+
+/* =======================================================
+   StudyPlannerPage için yeni öneri sistemi
+======================================================= */
 
 export function generateRecommendations(
-  exams: ExamResult[],
-  progressMap: SubjectProgressMap,
-  subjects: Array<{ id: string; name: string; topics: Array<{ id: string }> }>
+  exams: any[],
+  progressMap: any,
+  subjects: any[]
 ): Recommendation[] {
-  const recs: Recommendation[] = [];
+  const recommendations: Recommendation[] = [];
 
-  // 1. Weak subject detection from exams
-  if (exams.length > 0) {
-    const sectionNets: Record<string, number[]> = {
-      "TYT Türkçe": exams.map((e) => getSectionNet(e.tytTurkce)),
-      "TYT Matematik": exams.map((e) => getSectionNet(e.tytMat)),
-      "TYT Fen Bilimleri": exams.map((e) => getSectionNet(e.tytFen)),
-      "TYT Sosyal Bilimler": exams.map((e) => getSectionNet(e.tytSosyal)),
-      "AYT Matematik": exams.map((e) => getSectionNet(e.aytMat)),
-      "AYT Fizik": exams.map((e) => getSectionNet(e.aytFizik)),
-      "AYT Kimya": exams.map((e) => getSectionNet(e.aytKimya)),
-      "AYT Biyoloji": exams.map((e) => getSectionNet(e.aytBiyoloji)),
-    };
-
-    const maxNets: Record<string, number> = {
-      "TYT Türkçe": 40, "TYT Matematik": 40, "TYT Fen Bilimleri": 20,
-      "TYT Sosyal Bilimler": 20, "AYT Matematik": 40, "AYT Fizik": 14,
-      "AYT Kimya": 13, "AYT Biyoloji": 13,
-    };
-
-    const weakSubjects: Array<{ name: string; pct: number }> = [];
-    for (const [name, nets] of Object.entries(sectionNets)) {
-      const avg = nets.reduce((a, b) => a + b, 0) / nets.length;
-      const pct = (avg / (maxNets[name] ?? 40)) * 100;
-      if (pct < 50) weakSubjects.push({ name, pct });
-    }
-
-    weakSubjects.sort((a, b) => a.pct - b.pct);
-    for (const ws of weakSubjects.slice(0, 3)) {
-      recs.push({
-        id: `weak-${ws.name}`,
-        type: "study",
-        subject: ws.name,
-        reason: `Bu derste ortalama doluluk oranın %${Math.round(ws.pct)} — en zayıf dersin.`,
-        estimatedMinutes: 60,
-        difficulty: ws.pct < 25 ? "Zor" : "Orta",
-        priority: "Yüksek",
-        motivationSentence: motivationFor(ws.name),
-      });
-    }
-  }
-
-  // 2. Untouched topics
   for (const subject of subjects) {
-    const subjectProgress = progressMap[subject.id] ?? {};
-    const untouched = subject.topics.filter(
-      (t) => !subjectProgress[t.id] || subjectProgress[t.id] === "Başlanmadı"
-    );
-    if (untouched.length > 3) {
-      recs.push({
-        id: `untouched-${subject.id}`,
-        type: "study",
-        subject: subject.name,
-        topic: `${untouched.length} konu başlanmadı`,
-        reason: `${subject.name} dersinde ${untouched.length} konu henüz çalışılmadı.`,
-        estimatedMinutes: 45,
-        difficulty: "Orta",
-        priority: "Orta",
-        motivationSentence: motivationFor(subject.name),
-      });
+    const subjectProgress =
+      progressMap?.[subject.id] ?? {};
+
+    for (const topic of subject.topics) {
+      const status =
+        subjectProgress?.[topic.id];
+
+      if (
+        status === "Tekrar Edilecek"
+      ) {
+        recommendations.push({
+          id:
+            subject.id +
+            "-" +
+            topic.id +
+            "-review",
+
+          subject: subject.name,
+
+          topic: topic.name,
+
+          priority: "Yüksek",
+
+          type: "revision",
+
+          estimatedMinutes: 30,
+
+          difficulty: "Kolay",
+
+          reason:
+            "Bu konu tekrar bekliyor.",
+
+          motivationSentence:
+            "Tekrar edilen bilgiler kalıcı olur.",
+        });
+      }
+
+      if (
+        status === "Çalışılıyor"
+      ) {
+        recommendations.push({
+          id:
+            subject.id +
+            "-" +
+            topic.id +
+            "-study",
+
+          subject: subject.name,
+
+          topic: topic.name,
+
+          priority: "Orta",
+
+          type: "study",
+
+          estimatedMinutes: 45,
+
+          difficulty: "Orta",
+
+          reason:
+            "Bu konu üzerinde çalışmaya devam etmelisin.",
+
+          motivationSentence:
+            "Düzenli tekrar başarı getirir.",
+        });
+      }
+
+      if (
+        !status ||
+        status === "Başlanmadı"
+      ) {
+        recommendations.push({
+          id:
+            subject.id +
+            "-" +
+            topic.id +
+            "-new",
+
+          subject: subject.name,
+
+          topic: topic.name,
+
+          priority: "Orta",
+
+          type: "study",
+
+          estimatedMinutes: 50,
+
+          difficulty: "Orta",
+
+          reason:
+            "Henüz başlanmamış konu.",
+
+          motivationSentence:
+            "İlk adımı bugün at.",
+        });
+      }
     }
   }
+    if (Array.isArray(exams) && exams.length > 0) {
+    recommendations.push({
+      id: "exam-analysis",
 
-  // 3. Needs review topics
-  for (const subject of subjects) {
-    const subjectProgress = progressMap[subject.id] ?? {};
-    const needsReview = subject.topics.filter(
-      (t) => subjectProgress[t.id] === "Tekrar Edilecek"
-    );
-    if (needsReview.length > 0) {
-      recs.push({
-        id: `review-${subject.id}`,
-        type: "revision",
-        subject: subject.name,
-        topic: `${needsReview.length} konu tekrar edilecek`,
-        reason: `${subject.name}'de ${needsReview.length} konu tekrar işaretlendi.`,
-        estimatedMinutes: 30,
-        difficulty: "Orta",
-        priority: "Orta",
-        motivationSentence: "Tekrar etmek kalıcı öğrenmenin anahtarıdır!",
-      });
-    }
-  }
-
-  // 4. Exam recommendation if few exams
-  if (exams.length < 3) {
-    recs.push({
-      id: "exam-low",
-      type: "exam",
       subject: "Genel",
-      reason: "Az deneme sonucu var — daha fazla deneme girerek gelişimini takip et.",
-      estimatedMinutes: 180,
-      difficulty: "Orta",
+
       priority: "Yüksek",
-      motivationSentence: "Denemelerin puanını analiz etmek başarının ilk adımıdır!",
-    });
-  }
 
-  // 5. Motivation if all going well
-  if (recs.length === 0) {
-    recs.push({
-      id: "motivation-all-good",
-      type: "motivation",
-      subject: "Genel",
-      reason: "Harika gidiyorsun! Tüm dersler dengeli çalışılıyor.",
-      estimatedMinutes: 0,
+      type: "exam",
+
+      estimatedMinutes: 40,
+
       difficulty: "Kolay",
-      priority: "Düşük",
-      motivationSentence: "Devam et, hedefine çok az kaldı! 🎯",
+
+      reason:
+        "Son çözdüğün denemelerin analizini yap.",
+
+      motivationSentence:
+        "Deneme analizi net artırmanın en etkili yollarından biridir.",
     });
   }
 
-  return recs.slice(0, 6);
+  recommendations.push({
+    id: "daily-plan",
+
+    subject: "Genel",
+
+    priority: "Düşük",
+
+    type: "motivation",
+
+    estimatedMinutes: 10,
+
+    difficulty: "Kolay",
+
+    reason:
+      "Bugünkü çalışma düzenini koru.",
+
+    motivationSentence:
+      "İstikrarlı çalışma uzun vadede büyük fark oluşturur.",
+  });
+
+  const unique = new Map<string, Recommendation>();
+
+  for (const item of recommendations) {
+    if (!unique.has(item.id)) {
+      unique.set(item.id, item);
+    }
+  }
+
+  return Array.from(unique.values()).sort((a, b) => {
+    const order = {
+      "Yüksek": 0,
+      "Orta": 1,
+      "Düşük": 2,
+    };
+
+    return order[a.priority] - order[b.priority];
+  });
 }
