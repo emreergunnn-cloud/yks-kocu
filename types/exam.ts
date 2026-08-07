@@ -46,3 +46,14 @@ export interface ExamResult {
   createdAt: any;
   updatedAt?: any;
 }
+
+export interface RankingEstimate {
+  year: 2024 | 2025 | 2026;
+  siralama: number;
+}
+
+export interface CalculatedExamResult {
+  tytNet: number;
+  aytNet: number;
+  estimates: RankingEstimate[];
+}
