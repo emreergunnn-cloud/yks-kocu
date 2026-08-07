@@ -130,6 +130,40 @@ const coachReport = useMemo(() => {
           </Card>
         </div>
 
+<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+  <Link href="/calculator">
+    <Card className="p-6 hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer group">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-slate-500">
+            Yeni
+          </p>
+
+          <h2 className="text-2xl font-bold mt-2 group-hover:text-blue-600">
+            📊 Sıralama Hesaplayıcı
+          </h2>
+
+          <p className="mt-3 text-slate-500">
+            TYT, AYT ve OBP bilgilerini girerek
+            2024, 2025 ve 2026 için
+            tahmini başarı sıralamanı hesapla.
+          </p>
+
+          <div className="mt-5 inline-flex items-center rounded-lg bg-blue-600 text-white px-4 py-2 font-semibold">
+            Hesaplayıcıyı Aç →
+          </div>
+        </div>
+
+        <div className="text-6xl opacity-20 group-hover:opacity-40 transition">
+          📈
+        </div>
+      </div>
+    </Card>
+  </Link>
+
+</div>
+
         {/* Charts & Analytics Section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Trend Line Chart (2 Cols) */}

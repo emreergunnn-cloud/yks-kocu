@@ -14,6 +14,7 @@ import {
   Settings,
   User,
   Brain,
+  Calculator,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -48,6 +49,7 @@ const navGroups: NavGroup[] = [
       { name: "Denemeler", href: "/deneme", icon: <ClipboardList className="w-4 h-4" /> },
       { name: "Çalışma Planı", href: "/program", icon: <Brain className="w-4 h-4" /> },
       { name: "Çalışma Zamanlayıcı", href: "/study", icon: <Timer className="w-4 h-4" /> },
+      { name:  "Sıralama Hesaplayıcı",  href: "/calculator",icon: <Calculator className="w-4 h-4" />,},
       { name: "Takvim", href: "/calendar", icon: <CalendarDays className="w-4 h-4" /> },
     ],
   },

@@ -90,14 +90,53 @@ export const SAYISAL_2026: RankingTarget[] = [
   { rank:200000,tytMin:58, tytMax:60,  aytMin:25, aytMax:27 },
 ];
 
-export const EA_2024: RankingTarget[] = [];
-export const EA_2025: RankingTarget[] = [];
-export const EA_2026: RankingTarget[] = [];
+export const EA_2024: RankingTarget[] = [
+  { rank:1000, tytMin:105, tytMax:107, aytMin:63, aytMax:65 },
+  { rank:2500, tytMin:102, tytMax:104, aytMin:60, aytMax:62 },
+  { rank:5000, tytMin:99, tytMax:101, aytMin:57, aytMax:59 },
+  { rank:10000,tytMin:95, tytMax:97, aytMin:53, aytMax:55 },
+  { rank:20000,tytMin:91, tytMax:93, aytMin:49, aytMax:51 },
+  { rank:30000,tytMin:88, tytMax:90, aytMin:46, aytMax:48 },
+  { rank:50000,tytMin:83, tytMax:85, aytMin:42, aytMax:44 },
+  { rank:75000,tytMin:78, tytMax:80, aytMin:38, aytMax:40 },
+  { rank:100000,tytMin:74, tytMax:76, aytMin:34, aytMax:36 },
+  { rank:150000,tytMin:68, tytMax:70, aytMin:29, aytMax:31 },
+  { rank:200000,tytMin:63, tytMax:65, aytMin:25, aytMax:27 },
+];
 
-export const SOZEL_2024: RankingTarget[] = [];
-export const SOZEL_2025: RankingTarget[] = [];
-export const SOZEL_2026: RankingTarget[] = [];
+export const EA_2025 = EA_2024;
+export const EA_2026 = EA_2024;
 
-export const DIL_2024: RankingTarget[] = [];
-export const DIL_2025: RankingTarget[] = [];
-export const DIL_2026: RankingTarget[] = [];
+export const SOZEL_2024: RankingTarget[] = [
+  { rank:1000, tytMin:100, tytMax:102, aytMin:64, aytMax:66 },
+  { rank:2500, tytMin:97, tytMax:99, aytMin:61, aytMax:63 },
+  { rank:5000, tytMin:94, tytMax:96, aytMin:58, aytMax:60 },
+  { rank:10000,tytMin:90, tytMax:92, aytMin:54, aytMax:56 },
+  { rank:20000,tytMin:86, tytMax:88, aytMin:50, aytMax:52 },
+  { rank:30000,tytMin:83, tytMax:85, aytMin:47, aytMax:49 },
+  { rank:50000,tytMin:79, tytMax:81, aytMin:43, aytMax:45 },
+  { rank:75000,tytMin:74, tytMax:76, aytMin:39, aytMax:41 },
+  { rank:100000,tytMin:70, tytMax:72, aytMin:35, aytMax:37 },
+  { rank:150000,tytMin:64, tytMax:66, aytMin:30, aytMax:32 },
+  { rank:200000,tytMin:60, tytMax:62, aytMin:26, aytMax:28 },
+];
+
+export const SOZEL_2025 = SOZEL_2024;
+export const SOZEL_2026 = SOZEL_2024;
+
+export const DIL_2024: RankingTarget[] = [
+  { rank:1000, tytMin:98, tytMax:100, aytMin:73, aytMax:75 },
+  { rank:2500, tytMin:95, tytMax:97, aytMin:70, aytMax:72 },
+  { rank:5000, tytMin:92, tytMax:94, aytMin:67, aytMax:69 },
+  { rank:10000,tytMin:88, tytMax:90, aytMin:63, aytMax:65 },
+  { rank:20000,tytMin:84, tytMax:86, aytMin:59, aytMax:61 },
+  { rank:30000,tytMin:81, tytMax:83, aytMin:56, aytMax:58 },
+  { rank:50000,tytMin:77, tytMax:79, aytMin:52, aytMax:54 },
+  { rank:75000,tytMin:72, tytMax:74, aytMin:48, aytMax:50 },
+  { rank:100000,tytMin:68, tytMax:70, aytMin:44, aytMax:46 },
+  { rank:150000,tytMin:62, tytMax:64, aytMin:39, aytMax:41 },
+  { rank:200000,tytMin:58, tytMax:60, aytMin:35, aytMax:37 },
+];
+
+export const DIL_2025 = DIL_2024;
+export const DIL_2026 = DIL_2024;
