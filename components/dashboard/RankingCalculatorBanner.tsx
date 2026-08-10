@@ -5,14 +5,10 @@ import { Card } from "@/components/ui/Card";
 
 export function RankingCalculatorBanner() {
   return (
-    <Link href="/calculator">
-
+    <Link href="/calculator" className="block">
       <Card className="group cursor-pointer overflow-hidden">
-
         <div className="flex items-center justify-between">
-
           <div>
-
             <p className="text-sm font-semibold text-blue-600">
               Yeni Özellik
             </p>
@@ -30,17 +26,13 @@ export function RankingCalculatorBanner() {
             <div className="mt-6 inline-flex rounded-xl bg-blue-600 px-5 py-3 text-white font-semibold group-hover:bg-blue-700 transition">
               Hesaplayıcıyı Aç →
             </div>
-
           </div>
 
           <div className="hidden md:block text-7xl opacity-20 group-hover:opacity-40 transition">
             📈
           </div>
-
         </div>
-
       </Card>
-
     </Link>
   );
 }

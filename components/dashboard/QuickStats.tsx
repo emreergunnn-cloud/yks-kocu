@@ -20,9 +20,8 @@ export function QuickStats({
   maxAytNet,
 }: QuickStatsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
-
-      <Card>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <Card className="p-5">
         <p className="text-sm text-slate-500">
           Toplam Deneme
         </p>
@@ -30,9 +29,13 @@ export function QuickStats({
         <p className="mt-2 text-3xl font-black">
           {totalExams}
         </p>
+
+        <p className="text-xs text-slate-400 mt-2">
+          Adet
+        </p>
       </Card>
 
-      <Card>
+      <Card className="p-5">
         <p className="text-sm text-slate-500">
           Ortalama TYT
         </p>
@@ -46,7 +49,7 @@ export function QuickStats({
         </p>
       </Card>
 
-      <Card>
+      <Card className="p-5">
         <p className="text-sm text-slate-500">
           Ortalama AYT
         </p>
@@ -60,7 +63,7 @@ export function QuickStats({
         </p>
       </Card>
 
-      <Card>
+      <Card className="p-5">
         <p className="text-sm text-slate-500">
           Ortalama Toplam Net
         </p>
@@ -68,8 +71,11 @@ export function QuickStats({
         <p className="mt-2 text-3xl font-black text-emerald-600">
           {avgToplamNet}
         </p>
-      </Card>
 
+        <p className="text-xs text-slate-400 mt-2">
+          Net
+        </p>
+      </Card>
     </div>
   );
 }

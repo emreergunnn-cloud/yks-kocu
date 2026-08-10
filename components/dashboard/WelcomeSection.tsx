@@ -13,10 +13,8 @@ export function WelcomeSection({
   userProfile,
 }: Props) {
   return (
-    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
       <div>
-
         <h1 className="text-3xl font-black text-slate-900 dark:text-white">
           Hoş Geldin,{" "}
           {userProfile?.adSoyad ||
@@ -25,7 +23,6 @@ export function WelcomeSection({
         </h1>
 
         <div className="flex flex-wrap gap-2 mt-3">
-
           {userProfile?.alan && (
             <Badge>
               {userProfile.alan}
@@ -37,15 +34,11 @@ export function WelcomeSection({
               {userProfile.sinif}. Sınıf
             </Badge>
           )}
-
         </div>
 
         <p className="mt-4 text-slate-500 dark:text-slate-400">
-
-          Hedef:
-          {" "}
-          {userProfile?.hedefUniversite || "Üniversite"}
-          {" "}
+          Hedef:{" "}
+          {userProfile?.hedefUniversite || "Üniversite"}{" "}
           {userProfile?.hedefBolum || "Bölüm"}
 
           {userProfile?.hedefSiralama && (
@@ -54,9 +47,7 @@ export function WelcomeSection({
               • Hedef Derece #{userProfile.hedefSiralama}
             </>
           )}
-
         </p>
-
       </div>
 
       <Link
@@ -65,7 +56,6 @@ export function WelcomeSection({
       >
         + Deneme Ekle
       </Link>
-
     </div>
   );
 }

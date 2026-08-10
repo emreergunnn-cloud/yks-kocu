@@ -1,60 +1,75 @@
+"use client";
+
 import { Card } from "@/components/ui/Card";
+
+interface RankingCalculatorResult {
+  rank?: number | string;
+  ranking?: number | string;
+  score?: number | string;
+  [key: string]: any;
+}
 
 interface Props {
   year: number;
-  estimatedRank: number;
-  confidence: number;
-  target?: {
-    tytMin: number;
-    tytMax: number;
-    aytMin: number;
-    aytMax: number;
-  };
+  result: RankingCalculatorResult | null | undefined;
 }
 
 export function RankingResultCard({
   year,
-  estimatedRank,
-  confidence,
-  target,
+  result,
 }: Props) {
+  const rank = result?.rank ?? result?.ranking;
+  const score = result?.score;
+
   return (
     <Card className="p-6">
-      <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-        {year}
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+          {year} Tahmini
+        </h3>
 
-      <div className="mt-4">
+        <span className="rounded-lg bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+          Tahmini
+        </span>
+      </div>
+
+      {result ? (
+        <div className="space-y-4">
+          {rank !== undefined && (
+            <div>
+              <p className="text-sm text-slate-500">
+                Tahmini Başarı Sıralaması
+              </p>
+
+              <p className="mt-1 text-3xl font-black text-blue-600">
+                #{Number(rank).toLocaleString("tr-TR")}
+              </p>
+            </div>
+          )}
+
+          {score !== undefined && (
+            <div>
+              <p className="text-sm text-slate-500">
+                Tahmini Puan
+              </p>
+
+              <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
+                {score}
+              </p>
+            </div>
+          )}
+
+          {rank === undefined && score === undefined && (
+            <p className="text-sm text-slate-500">
+              Hesaplama sonucu hazır.
+            </p>
+          )}
+        </div>
+      ) : (
         <p className="text-sm text-slate-500">
-          Tahmini Sıralama
+          Henüz hesaplama yapılmadı.
         </p>
-
-        <p className="text-4xl font-black text-blue-600 dark:text-blue-400">
-          {estimatedRank.toLocaleString("tr-TR")}
-        </p>
-      </div>
-
-      <div className="mt-6 border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3 text-sm">
-
-        <p>
-          TYT Hedef:{" "}
-          {target
-            ? `${target.tytMin}-${target.tytMax}`
-            : "-"}
-        </p>
-
-        <p>
-          AYT Hedef:{" "}
-          {target
-            ? `${target.aytMin}-${target.aytMax}`
-            : "-"}
-        </p>
-
-        <p className="font-semibold text-emerald-600 dark:text-emerald-400">
-          Güven Oranı: %{confidence}
-        </p>
-
-      </div>
+      )}
     </Card>
   );
 }
