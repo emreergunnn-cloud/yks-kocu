@@ -6,6 +6,7 @@ import { ExamResult, ExamType, SectionScore } from "../../types/exam";
 import { AlanOption } from "../../types/user";
 import { calculateNet, buildSectionScore, createExamResult, updateExamResult } from "../../services/examService";
 import { useAuth } from "../../context/AuthContext";
+import { YKS_SUBJECTS } from "../../lib/constants/subjects";
 
 interface ExamFormProps {
   initialData?: ExamResult;
@@ -26,6 +27,10 @@ export const ExamForm: React.FC<ExamFormProps> = ({ initialData, isEdit = false 
   const [notlar, setNotlar] = useState(initialData?.notlar || "");
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [weakTopics, setWeakTopics] = useState<string[]>(initialData?.weakTopics || []);
+  const [pendingExamData, setPendingExamData] = useState<Omit<ExamResult, "id"> | null>(null);
 
   // Helper to extract initial D / Y
   const getInitialValue = (field: SectionScore | number | undefined, key: "dogru" | "yanlis") => {
@@ -94,56 +99,86 @@ export const ExamForm: React.FC<ExamFormProps> = ({ initialData, isEdit = false 
     ).toFixed(2)
   );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setErrorMsg("");
+  const getWeakSubjects = (data: Omit<ExamResult, "id">): string[] => {
+    const weak: string[] = [];
+    const check = (section: any, id: string) => {
+      if (!section || typeof section === 'number') return;
+      if (section.yanlis > 0 || section.bos > 0) weak.push(id);
+    };
+    check(data.tytTurkce, "tyt_turkce");
+    check(data.tytSosyal, "tyt_sosyal");
+    check(data.tytMat, "tyt_matematik");
+    check(data.tytFen, "tyt_fen");
+    check(data.aytMat, "ayt_matematik");
+    check(data.aytFizik, "ayt_fizik");
+    check(data.aytKimya, "ayt_kimya");
+    check(data.aytBiyoloji, "ayt_biyoloji");
+    check(data.aytEdebiyat, "ayt_edebiyat");
+    check(data.aytTarih1, "ayt_tarih1");
+    check(data.aytCografya1, "ayt_cografya1");
+    return weak;
+  };
 
+  const performSave = async (data: Omit<ExamResult, "id">) => {
     setSaving(true);
     try {
-      const examData: Omit<ExamResult, "id"> = {
-        uid: user.uid,
-        yayinAdi: yayinAdi.trim() || "Genel Deneme",
-        sinavAdi: sinavAdi.trim() || "Deneme Sınavı",
-        denemeTipi,
-        alan,
-        sinavTarihi,
-        notlar,
-
-        // TYT
-        tytTurkce: buildSectionScore(Number(tytTurkceD), Number(tytTurkceY), 40),
-        tytSosyal: buildSectionScore(Number(tytSosyalD), Number(tytSosyalY), 20),
-        tytMat: buildSectionScore(Number(tytMatD), Number(tytMatY), 40),
-        tytFen: buildSectionScore(Number(tytFenD), Number(tytFenY), 20),
-        tytToplamNet,
-
-        // AYT
-        aytMat: buildSectionScore(Number(aytMatD), Number(aytMatY), 40),
-        aytFizik: buildSectionScore(Number(aytFizikD), Number(aytFizikY), 14),
-        aytKimya: buildSectionScore(Number(aytKimyaD), Number(aytKimyaY), 13),
-        aytBiyoloji: buildSectionScore(Number(aytBiyoD), Number(aytBiyoY), 13),
-        aytEdebiyat: buildSectionScore(Number(aytEdebiyatD), Number(aytEdebiyatY), 24),
-        aytTarih1: buildSectionScore(Number(aytTarih1D), Number(aytTarih1Y), 10),
-        aytCografya1: buildSectionScore(Number(aytCografya1D), Number(aytCografya1Y), 6),
-        aytToplamNet,
-
-        toplamNet: Number((tytToplamNet + aytToplamNet).toFixed(2)),
-        createdAt: initialData?.createdAt || new Date(),
-      };
-
       if (isEdit && initialData?.id) {
-        await updateExamResult(initialData.id, examData);
+        await updateExamResult(initialData.id, data);
       } else {
-        await createExamResult(examData);
+        await createExamResult(data);
       }
-
+      setShowAnalysisModal(false);
       router.push("/deneme");
       router.refresh();
     } catch (err: any) {
       console.error("Exam submit error:", err);
       setErrorMsg("Sınav kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.");
-    } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setErrorMsg("");
+
+    const examData: Omit<ExamResult, "id"> = {
+      uid: user.uid,
+      yayinAdi: yayinAdi.trim() || "Genel Deneme",
+      sinavAdi: sinavAdi.trim() || "Deneme Sınavı",
+      denemeTipi,
+      alan,
+      sinavTarihi,
+      notlar,
+      weakTopics: initialData?.weakTopics || [],
+
+      // TYT
+      tytTurkce: buildSectionScore(Number(tytTurkceD), Number(tytTurkceY), 40),
+      tytSosyal: buildSectionScore(Number(tytSosyalD), Number(tytSosyalY), 20),
+      tytMat: buildSectionScore(Number(tytMatD), Number(tytMatY), 40),
+      tytFen: buildSectionScore(Number(tytFenD), Number(tytFenY), 20),
+      tytToplamNet,
+
+      // AYT
+      aytMat: buildSectionScore(Number(aytMatD), Number(aytMatY), 40),
+      aytFizik: buildSectionScore(Number(aytFizikD), Number(aytFizikY), 14),
+      aytKimya: buildSectionScore(Number(aytKimyaD), Number(aytKimyaY), 13),
+      aytBiyoloji: buildSectionScore(Number(aytBiyoD), Number(aytBiyoY), 13),
+      aytEdebiyat: buildSectionScore(Number(aytEdebiyatD), Number(aytEdebiyatY), 24),
+      aytTarih1: buildSectionScore(Number(aytTarih1D), Number(aytTarih1Y), 10),
+      aytCografya1: buildSectionScore(Number(aytCografya1D), Number(aytCografya1Y), 6),
+      aytToplamNet,
+
+      toplamNet: Number((tytToplamNet + aytToplamNet).toFixed(2)),
+      createdAt: initialData?.createdAt || new Date(),
+    };
+
+    const weakSubjs = getWeakSubjects(examData);
+    if (weakSubjs.length > 0) {
+      setPendingExamData(examData);
+      setShowAnalysisModal(true);
+    } else {
+      await performSave(examData);
     }
   };
 
@@ -360,10 +395,80 @@ export const ExamForm: React.FC<ExamFormProps> = ({ initialData, isEdit = false 
             disabled={saving}
             className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-medium text-sm rounded-xl shadow-md transition-all disabled:opacity-50"
           >
-            {saving ? "Kaydediliyor..." : isEdit ? "Güncelle" : "Sınavı Kaydet"}
+            {saving ? "Kaydediliyor..." : isEdit ? "İleri" : "Sınavı Kaydet"}
           </button>
         </div>
       </div>
+
+      {showAnalysisModal && pendingExamData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-slate-200 dark:border-slate-800">
+            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Yanlış Konu Analizi</h3>
+                <p className="text-sm text-slate-500 mt-1">Bu yanlışlar ağırlıklı olarak hangi konulardandı?</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAnalysisModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-2"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-5 overflow-y-auto space-y-6 flex-1">
+              {getWeakSubjects(pendingExamData).map(subjId => {
+                const subject = YKS_SUBJECTS.find(s => s.id === subjId);
+                if (!subject) return null;
+                return (
+                  <div key={subject.id} className="space-y-3">
+                    <h4 className="font-semibold text-slate-800 dark:text-slate-200">{subject.name}</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {subject.topics.map(topic => (
+                        <label key={topic.id} className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={weakTopics.includes(topic.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setWeakTopics(prev => [...prev, topic.id]);
+                              } else {
+                                setWeakTopics(prev => prev.filter(id => id !== topic.id));
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="truncate">{topic.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="p-5 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center shrink-0">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => performSave({ ...pendingExamData, weakTopics: [] })}
+                className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                Şimdi Değil
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => performSave({ ...pendingExamData, weakTopics })}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl shadow-sm transition-all disabled:opacity-50"
+              >
+                {saving ? "Kaydediliyor..." : "Analizi Kaydet"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 };

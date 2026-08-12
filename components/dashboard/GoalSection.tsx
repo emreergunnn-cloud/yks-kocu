@@ -2,8 +2,13 @@
 
 import { GoalTracker } from "../analytics/GoalTracker";
 import { Card } from "../ui/Card";
+import { MasteryResult } from "../../services/masteryEngine";
 
-export function GoalSection() {
+interface GoalSectionProps {
+  masteries?: Record<string, MasteryResult>;
+}
+
+export function GoalSection({ masteries }: GoalSectionProps) {
   return (
     <Card className="space-y-4">
       <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -16,7 +21,7 @@ export function GoalSection() {
         </p>
       </div>
 
-      <GoalTracker />
+      <GoalTracker masteries={masteries} />
     </Card>
   );
-}
+}

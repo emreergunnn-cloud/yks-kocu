@@ -18,6 +18,7 @@ export interface ExamResult {
   alan: AlanOption;
   sinavTarihi?: string;
   notlar?: string;
+  weakTopics?: string[];
   
   // TYT Sections
   tytTurkce?: SectionScore | number;

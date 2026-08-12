@@ -1,6 +1,12 @@
 export type SinifOption = "9" | "10" | "11" | "12" | "Mezun";
-export type AlanOption = "Sayısal" | "Eşit Ağırlık" | "Sözel" | "Dil";
-export type UserRole = "student" | "admin";
+
+export type AlanOption =
+  | "Sayısal"
+  | "Eşit Ağırlık"
+  | "Sözel"
+  | "Dil";
+
+export type UserRole = "student" | "parent" | "coach" | "secretary" | "admin" | "superadmin";
 
 export interface UserProfile {
   uid: string;
@@ -18,7 +24,6 @@ export interface UserProfile {
 
   mezuniyetYili?: number | string;
 
-  // 👇 Yeni alanlar
   onboardingCompleted?: boolean;
 
   diplomaNotu?: number;

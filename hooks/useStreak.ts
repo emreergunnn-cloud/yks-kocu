@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   getStreakData,
   recordStudyActivity,
@@ -13,7 +13,7 @@ interface UseStreakReturn {
   loading: boolean;
   error: string | null;
   /** Call this after a study session or topic completion to record activity */
-  recordActivity: () => Promise<StreakData | null>;
+  recordActivity: (endTime?: number) => Promise<StreakData | null>;
   /** Manually refresh streak data from Firestore */
   refresh: () => Promise<void>;
 }
@@ -30,22 +30,40 @@ export function useStreak(): UseStreakReturn {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isMounted = React.useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
   const loadStreak = useCallback(async () => {
     if (!user?.uid) {
-      setStreak(null);
-      setLoading(false);
+      if (isMounted.current) {
+        setStreak(null);
+        setLoading(false);
+      }
       return;
     }
     try {
-      setLoading(true);
-      setError(null);
+      if (isMounted.current) {
+        setLoading(true);
+        setError(null);
+      }
       const data = await getStreakData(user.uid);
-      setStreak(data);
+      if (isMounted.current) {
+        setStreak(data);
+      }
     } catch (err) {
-      setError("Seri verisi yüklenemedi.");
+      if (isMounted.current) {
+        setError("Seri verisi yüklenemedi.");
+      }
       console.error("[useStreak] load error:", err);
     } finally {
-      setLoading(false);
+      if (isMounted.current) {
+        setLoading(false);
+      }
     }
   }, [user?.uid]);
 
@@ -53,11 +71,13 @@ export function useStreak(): UseStreakReturn {
     loadStreak();
   }, [loadStreak]);
 
-  const recordActivity = useCallback(async (): Promise<StreakData | null> => {
+  const recordActivity = useCallback(async (endTime?: number): Promise<StreakData | null> => {
     if (!user?.uid) return null;
     try {
-      const updated = await recordStudyActivity(user.uid);
-      setStreak(updated);
+      const updated = await recordStudyActivity(user.uid, endTime);
+      if (isMounted.current) {
+        setStreak(updated);
+      }
       return updated;
     } catch (err) {
       console.error("[useStreak] record error:", err);

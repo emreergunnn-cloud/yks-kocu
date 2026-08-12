@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
+import { useStreak } from "../../hooks/useStreak";
 import { getTopicProgress, SubjectProgressMap, computeSubjectStats } from "../../services/topicService";
 import { getExamResults } from "../../services/examService";
 import { generateRecommendations, Recommendation } from "../../services/coachService";
@@ -12,6 +13,7 @@ import Link from "next/link";
 
 export const AchievementsPage: React.FC = () => {
   const { user, userProfile } = useAuth();
+  const { streak, loading: streakLoading } = useStreak();
   const [progressMap, setProgressMap] = useState<SubjectProgressMap>({});
   const [exams, setExams] = useState<ExamResult[]>([]);
   const [recs, setRecs] = useState<Recommendation[]>([]);
@@ -74,6 +76,42 @@ export const AchievementsPage: React.FC = () => {
       max: 20,
     },
     {
+      id: "streak_3",
+      icon: <Flame className="w-5 h-5" />,
+      title: "Isınma Turu",
+      description: "3 gün üst üste çalış",
+      earned: (streak?.longestStreak || 0) >= 3,
+      progress: Math.min((streak?.longestStreak || 0), 3),
+      max: 3,
+    },
+    {
+      id: "streak_7",
+      icon: <Flame className="w-5 h-5" />,
+      title: "Ateşli Öğrenci",
+      description: "7 gün üst üste çalış",
+      earned: (streak?.longestStreak || 0) >= 7,
+      progress: Math.min((streak?.longestStreak || 0), 7),
+      max: 7,
+    },
+    {
+      id: "streak_14",
+      icon: <Flame className="w-5 h-5" />,
+      title: "Durmak Yok",
+      description: "14 gün üst üste çalış",
+      earned: (streak?.longestStreak || 0) >= 14,
+      progress: Math.min((streak?.longestStreak || 0), 14),
+      max: 14,
+    },
+    {
+      id: "streak_30",
+      icon: <Flame className="w-5 h-5" />,
+      title: "Terminatör",
+      description: "30 gün üst üste çalış",
+      earned: (streak?.longestStreak || 0) >= 30,
+      progress: Math.min((streak?.longestStreak || 0), 30),
+      max: 30,
+    },
+    {
       id: "first_topic",
       icon: <BookOpen className="w-5 h-5" />,
       title: "Başlangıç",
@@ -132,7 +170,7 @@ export const AchievementsPage: React.FC = () => {
   const level = Math.floor(xp / 500) + 1;
   const levelXp = xp % 500;
 
-  if (loading) {
+  if (loading || streakLoading) {
     return (
       <div className="p-6 space-y-4">
         {[1, 2, 3].map((i) => <div key={i} className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />)}

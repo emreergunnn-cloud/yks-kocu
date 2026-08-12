@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Timer, Play, Pause, RotateCcw, Coffee, Target, BookOpen, Check, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { collection, addDoc, Timestamp } from "firebase/firestore";
+import { YKS_SUBJECTS } from "../../lib/constants/subjects";
 import { db } from "../../lib/firebase";
 import { getUserSettings, UserSettings, DEFAULT_SETTINGS } from "../../services/settingsService";
 import { recordStudyActivity } from "../../services/streakService";
@@ -49,11 +52,46 @@ export const StudyTimerPage: React.FC = () => {
   const [subject, setSubject] = useState("");
   const [note, setNote] = useState("");
   const [savedSessions, setSavedSessions] = useState<Array<{ subject: string; duration: number; ts: Date }>>([]);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastSavedSubject, setLastSavedSubject] = useState("");
+  const [lastSavedDuration, setLastSavedDuration] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
 
+  const searchParams = useSearchParams();
+  const urlSubjectId = searchParams.get("subjectId");
+  const urlTopicId = searchParams.get("topicId");
+  const urlDuration = searchParams.get("duration");
+
+  const [subjectId, setSubjectId] = useState<string>(urlSubjectId || "");
+  const [topicId, setTopicId] = useState<string>(urlTopicId || "");
+
   useEffect(() => {
-    if (user) {
+    if (urlSubjectId && urlTopicId) {
+      const subj = YKS_SUBJECTS.find(s => s.id === urlSubjectId);
+      const top = subj?.topics.find(t => t.id === urlTopicId);
+      if (subj && top) {
+        setSubject(`${subj.name} - ${top.name}`);
+      }
+    }
+    if (urlDuration) {
+      const mins = parseInt(urlDuration, 10);
+      if (!isNaN(mins) && mins > 0) {
+        const found = PRESETS.find(p => p.work === mins);
+        if (found) {
+          setPreset(found);
+          setTimeLeft(found.work * 60);
+        } else {
+          // Custom preset
+          setPreset({ label: `${mins} Dk`, work: mins, short: 5, long: 15 });
+          setTimeLeft(mins * 60);
+        }
+      }
+    }
+  }, [urlSubjectId, urlTopicId, urlDuration]);
+
+  useEffect(() => {
+    if (user && !urlDuration) {
       getUserSettings(user.uid).then((s) => {
         setSettings(s);
         const found = PRESETS.find((p) => p.work === s.pomodoroLength) ?? PRESETS[0];
@@ -61,7 +99,7 @@ export const StudyTimerPage: React.FC = () => {
         setTimeLeft(found.work * 60);
       });
     }
-  }, [user]);
+  }, [user, urlDuration]);
 
   const getModeTotal = useCallback((m: PomodoroMode) => {
     if (m === "pomodoro") return preset.work * 60;
@@ -119,14 +157,31 @@ export const StudyTimerPage: React.FC = () => {
       endTime: Timestamp.now(),
       duration: secs,
       subject: subject || "Genel",
+      subjectId: subjectId || null,
+      topicId: topicId || null,
       note: note,
       uid: user.uid,
     };
     try {
       await addDoc(collection(db, "users", user.uid, "studySessions"), sessionData);
       setSavedSessions((prev) => [{ subject: subject || "Genel", duration: secs, ts: new Date() }, ...prev.slice(0, 4)]);
+      setLastSavedSubject(subject || "Genel");
+      setLastSavedDuration(secs);
+      setShowSuccessModal(true);
+      
       // Record streak activity
-      await recordStudyActivity(user.uid).catch(() => {});
+      await recordStudyActivity(user.uid, sessionData.endTime.toMillis()).catch(() => {});
+      
+      // Update progressMap if this is an AI Coach tracked session
+      if (subjectId && topicId) {
+        import("../../services/topicService").then(async ({ getTopicProgress, saveTopicStatus }) => {
+          const pm = await getTopicProgress(user.uid);
+          const currentStatus = pm[subjectId]?.[topicId];
+          if (!currentStatus) {
+            await saveTopicStatus(user.uid, subjectId, topicId, "Çalışılıyor");
+          }
+        });
+      }
     } catch {}
   };
 
@@ -309,6 +364,40 @@ export const StudyTimerPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 w-full max-w-sm text-center space-y-4 shadow-xl border border-slate-200 dark:border-slate-800">
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto">
+              <Check className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Seans Tamamlandı 🎉</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                <span className="font-semibold text-slate-700 dark:text-slate-300">{lastSavedSubject}</span> çalışmasını tamamladın.
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {Math.round(lastSavedDuration / 60)} dakikalık çalışma başarıyla kaydedildi.
+              </p>
+            </div>
+            <div className="pt-2 flex flex-col gap-2">
+              <Link
+                href="/dashboard"
+                className="w-full flex justify-center py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white rounded-xl text-sm font-bold shadow-sm transition-all"
+              >
+                AI Koç'a Dön
+              </Link>
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="w-full py-2.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 text-sm font-semibold transition-all"
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

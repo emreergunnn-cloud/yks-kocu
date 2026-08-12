@@ -1,14 +1,4 @@
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  limit,
-  getCountFromServer,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "../lib/firebase";
-import { UserProfile } from "../types/user";
+import { auth } from "../lib/firebase";
 
 export interface AdminUserRow {
   uid: string;
@@ -17,7 +7,7 @@ export interface AdminUserRow {
   alan: string;
   sinif: string;
   role: string;
-  createdAt: string; // formatted date string
+  createdAt: string;
 }
 
 export interface AdminStats {
@@ -26,102 +16,114 @@ export interface AdminStats {
   totalStudySessions: number;
 }
 
-/** Fetch aggregated platform statistics. */
-export async function getAdminStats(): Promise<AdminStats> {
-  // Count users
-  let totalUsers = 0;
-  try {
-    const snap = await getCountFromServer(collection(db, "users"));
-    totalUsers = snap.data().count;
-  } catch {
-    // If count fails, fall back to getDocs length
-    try {
-      const snap = await getDocs(collection(db, "users"));
-      totalUsers = snap.size;
-    } catch {
-      totalUsers = 0;
-    }
+async function getAdminToken(): Promise<string> {
+  const user = auth.currentUser;
+
+  if (!user) {
+    throw new Error("Oturum bulunamadı.");
   }
 
-  // Count top-level exam_results (which stores uid per document)
-  let totalExams = 0;
-  try {
-    const snap = await getCountFromServer(collection(db, "exam_results"));
-    totalExams = snap.data().count;
-  } catch {
-    try {
-      const snap = await getDocs(collection(db, "exam_results"));
-      totalExams = snap.size;
-    } catch {
-      totalExams = 0;
-    }
-  }
-
-  // studySessions are stored as subcollections under users/ — we can't easily
-  // getCount across a collectionGroup without an index, so we return 0 as fallback.
-  // This is safe to leave at 0 for now; the display degrades gracefully.
-  const totalStudySessions = 0;
-
-  return { totalUsers, totalExams, totalStudySessions };
+  return user.getIdToken();
 }
 
-/** Fetch a paginated list of users for the admin panel (max 100). */
-export async function getAdminUsers(maxResults = 100): Promise<AdminUserRow[]> {
+async function readResponse(response: Response) {
+  const text = await response.text();
+
+  if (!text) {
+    throw new Error(
+      `Sunucudan boş cevap geldi. HTTP ${response.status}`
+    );
+  }
+
   try {
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, orderBy("createdAt", "desc"), limit(maxResults));
-    const snap = await getDocs(q);
-
-    return snap.docs.map((docSnap) => {
-      const d = docSnap.data() as UserProfile;
-
-      let createdStr = "—";
-      if (d.createdAt) {
-        let date: Date;
-        if (d.createdAt instanceof Timestamp) {
-          date = d.createdAt.toDate();
-        } else if (d.createdAt?.seconds) {
-          date = new Date(d.createdAt.seconds * 1000);
-        } else {
-          date = new Date(d.createdAt);
-        }
-        if (!isNaN(date.getTime())) {
-          createdStr = date.toLocaleDateString("tr-TR", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          });
-        }
-      }
-
-      return {
-        uid: d.uid ?? docSnap.id,
-        adSoyad: d.adSoyad ?? "—",
-        email: d.email ?? "—",
-        alan: d.alan || "—",
-        sinif: d.sinif || "—",
-        role: d.role ?? "student",
-        createdAt: createdStr,
-      };
-    });
+    return JSON.parse(text);
   } catch {
-    // If ordering fails (no index yet), fall back to unordered fetch
-    try {
-      const snap = await getDocs(collection(db, "users"));
-      return snap.docs.slice(0, maxResults).map((docSnap) => {
-        const d = docSnap.data() as UserProfile;
-        return {
-          uid: d.uid ?? docSnap.id,
-          adSoyad: d.adSoyad ?? "—",
-          email: d.email ?? "—",
-          alan: d.alan || "—",
-          sinif: d.sinif || "—",
-          role: d.role ?? "student",
-          createdAt: "—",
-        };
-      });
-    } catch {
-      return [];
+    throw new Error(
+      `Sunucudan geçersiz cevap geldi. HTTP ${response.status}`
+    );
+  }
+}
+
+export async function getAdminStats(): Promise<AdminStats> {
+  const token = await getAdminToken();
+
+  const response = await fetch("/api/admin/stats", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  });
+
+  const data = await readResponse(response);
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || "İstatistikler alınamadı.");
+  }
+
+  return data.stats;
+}
+
+export async function getAdminUsers(
+  maxResults = 100
+): Promise<AdminUserRow[]> {
+  const token = await getAdminToken();
+
+  const response = await fetch(
+    `/api/admin/users?limit=${maxResults}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
     }
+  );
+
+  const data = await readResponse(response);
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || "Kullanıcılar alınamadı.");
+  }
+
+  return data.users;
+}
+
+export async function updateAdminUserRole(
+  uid: string,
+  role: "student" | "parent" | "coach" | "secretary" | "admin"
+): Promise<void> {
+  const token = await getAdminToken();
+
+  const response = await fetch(`/api/admin/users/${uid}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ role }),
+  });
+
+  const data = await readResponse(response);
+
+  if (!response.ok || !data.success) {
+    throw new Error(
+      data.error || "Kullanıcı rolü değiştirilemedi."
+    );
+  }
+}
+
+export async function deleteAdminUser(uid: string): Promise<void> {
+  const token = await getAdminToken();
+
+  const response = await fetch(`/api/admin/users/${uid}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await readResponse(response);
+
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || "Kullanıcı silinemedi.");
   }
 }

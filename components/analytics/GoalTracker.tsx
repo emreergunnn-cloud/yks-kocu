@@ -7,7 +7,8 @@ import { getStudyStats, StudyStats } from "../../services/studyStatsService";
 import { getExamResults } from "../../services/examService";
 import { getTopicProgress } from "../../services/topicService";
 import { YKS_SUBJECTS } from "../../lib/constants/subjects";
-import { CheckCircle2, Clock, Target, BookOpen, ClipboardList, ChevronUp } from "lucide-react";
+import { MasteryResult } from "../../services/masteryEngine";
+import { CheckCircle2, Clock, Target, BookOpen, ClipboardList, Zap } from "lucide-react";
 
 type TabType = "daily" | "weekly" | "monthly";
 
@@ -21,7 +22,19 @@ interface GoalItemData {
   color: string;
 }
 
-export const GoalTracker: React.FC = () => {
+interface GoalTrackerProps {
+  masteries?: Record<string, MasteryResult>;
+}
+
+const MASTERY_LEVEL_COLORS: Record<string, { bar: string; text: string; bg: string }> = {
+  "Kritik Eksik": { bar: "bg-red-500",    text: "text-red-600 dark:text-red-400",    bg: "bg-red-50 dark:bg-red-900/20" },
+  "Geliştirilmeli": { bar: "bg-orange-500", text: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-900/20" },
+  "Orta":          { bar: "bg-amber-500",  text: "text-amber-600 dark:text-amber-400",  bg: "bg-amber-50 dark:bg-amber-900/20" },
+  "İyi":           { bar: "bg-blue-500",   text: "text-blue-600 dark:text-blue-400",   bg: "bg-blue-50 dark:bg-blue-900/20" },
+  "Güçlü":         { bar: "bg-emerald-500",text: "text-emerald-600 dark:text-emerald-400",bg: "bg-emerald-50 dark:bg-emerald-900/20" },
+};
+
+export const GoalTracker: React.FC<GoalTrackerProps> = ({ masteries }) => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>("daily");
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
@@ -196,6 +209,54 @@ export const GoalTracker: React.FC = () => {
           );
         })}
       </div>
+
+      {/* Konu Gücü — En Zayıf 3 Konu */}
+      {masteries && Object.keys(masteries).length > 0 && (() => {
+        // Konu adını bul (topicId -> name)
+        const topicNameMap: Record<string, string> = {};
+        YKS_SUBJECTS.forEach(sub => {
+          sub.topics.forEach(t => { topicNameMap[t.id] = t.name; });
+        });
+
+        const bottom3 = Object.values(masteries)
+          .sort((a, b) => a.score - b.score)
+          .slice(0, 3)
+          .filter(m => m.score < 80); // Sadece iyileştirme gereken konular
+
+        if (bottom3.length === 0) return null;
+
+        return (
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center gap-1.5">
+              <Zap className="w-3.5 h-3.5 text-amber-500" />
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Konu Gücü — Geliştirilmesi Gerekenler</p>
+            </div>
+            <div className="space-y-2">
+              {bottom3.map((m) => {
+                const name = topicNameMap[m.topicId] || m.topicId;
+                const colors = MASTERY_LEVEL_COLORS[m.level] || MASTERY_LEVEL_COLORS["İyi"];
+                return (
+                  <div key={m.topicId} className={`p-3 rounded-xl border border-slate-200/60 dark:border-slate-800/60 ${colors.bg} space-y-1.5`}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{name}</span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className={`text-[10px] font-bold ${colors.text}`}>{m.level}</span>
+                        <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400">{m.score}/100</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${colors.bar}`}
+                        style={{ width: `${m.score}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

@@ -95,11 +95,18 @@ router.replace("/onboarding");
   };
 
   const handleGoogleSignIn = async () => {
-    setError("");
-    setLoading(true);
-    try {
+  setError("");
+  setLoading(true);
+
+  try {
+    const needsOnboarding =
       await signInWithGoogle();
-router.replace("/dashboard");
+
+    if (needsOnboarding) {
+      router.replace("/onboarding");
+    } else {
+      router.replace("/dashboard");
+    }
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message ?? "";
       if (msg.includes("popup-closed-by-user") || msg.includes("cancelled-popup-request")) {
