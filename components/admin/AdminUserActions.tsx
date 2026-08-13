@@ -54,7 +54,7 @@ export function AdminUserActions({
 
     try {
       // TypeScript requires strict type for role
-      await updateAdminUserRole(uid, newRole as "student" | "parent" | "coach" | "secretary" | "admin");
+      await updateAdminUserRole(uid, newRole as "student" | "secretary" | "admin");
       onRoleChange(uid, newRole);
     } catch (error) {
       console.error("Rol değiştirme hatası:", error);
@@ -112,8 +112,6 @@ export function AdminUserActions({
         className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:focus:border-blue-400 dark:focus:ring-blue-400"
       >
         <option value="student">Öğrenci</option>
-        <option value="parent">Veli</option>
-        <option value="coach">Koç</option>
         <option value="secretary">Sekreter</option>
         <option value="admin">Admin</option>
       </select>

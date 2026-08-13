@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "../context/AuthContext";
-import { ThemeProvider } from "../components/settings/ThemeProvider";
+import { AuthProvider } from "@/context/AuthContext";
+import { ThemeProvider } from "@/components/settings/ThemeProvider";
+import { ServiceWorkerRegistrar } from "@/components/layout/ServiceWorkerRegistrar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,6 +59,7 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
         </AuthProvider>
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   );

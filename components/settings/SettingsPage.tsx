@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { getUserSettings, saveUserSettings, UserSettings, DEFAULT_SETTINGS } from "../../services/settingsService";
-import { Settings, Bell, Timer, Moon, Sun, Monitor, Target, Save, Check } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { getUserSettings, saveUserSettings, UserSettings, DEFAULT_SETTINGS } from "@/services/settingsService";
+import { Settings, Bell, Timer, Moon, Sun, Monitor, Target, Save, Check, Smartphone } from "lucide-react";
+import { Switch } from "@/components/ui/Switch";
+import { subscribeToYksQuoteNotifications, unsubscribeFromYksQuoteNotifications } from "@/services/pwaService";
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth();
@@ -19,6 +21,16 @@ export const SettingsPage: React.FC = () => {
       setLoading(false);
     });
   }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    if (settings.yksQuoteNotificationEnabled) {
+      subscribeToYksQuoteNotifications(user.uid);
+    } else {
+      unsubscribeFromYksQuoteNotifications(user.uid);
+    }
+  }, [settings.yksQuoteNotificationEnabled, user]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -147,20 +159,30 @@ export const SettingsPage: React.FC = () => {
       {/* Notifications */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4">
         <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-          <Bell className="w-4 h-4" /> Bildirimler
+          <Bell className="w-4 h-4" /> Genel Bildirimler
         </h2>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Bildirimleri Etkinleştir</p>
             <p className="text-xs text-slate-400 mt-0.5">Çalışma ve sınav hatırlatmaları</p>
           </div>
-          <button
-            onClick={() => update("notificationsEnabled", !settings.notificationsEnabled)}
-            className={`relative w-10 h-5 rounded-full transition-colors ${settings.notificationsEnabled ? "bg-blue-600" : "bg-slate-300 dark:bg-slate-600"}`}
-          >
-            <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${settings.notificationsEnabled ? "left-5.5" : "left-0.5"}`} style={{ left: settings.notificationsEnabled ? "calc(100% - 18px)" : "2px" }} />
-          </button>
+          <Switch
+            checked={settings.notificationsEnabled}
+            onChange={(checked) => update("notificationsEnabled", checked)}
+          />
         </div>
+
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">YKS + Günlük Söz Bildirimleri</p>
+            <p className="text-xs text-slate-400 mt-0.5">YKS'ye kalan süreyi ve günün sözünü telefon bildirimlerinde göster.</p>
+          </div>
+          <Switch
+            checked={settings.yksQuoteNotificationEnabled}
+            onChange={(checked) => update("yksQuoteNotificationEnabled", checked)}
+          />
+        </div>
+
       </div>
     </div>
   );

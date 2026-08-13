@@ -23,6 +23,7 @@ service cloud.firestore {
             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "super_admin");
     }
 
+
     // ============================================================
     // USERS
     // users/{uid}
@@ -133,6 +134,7 @@ service cloud.firestore {
       match /topicProgress/{progressId} {
         allow read, write: if isOwner(uid) || isAdmin();
       }
+
     }
 
     // ============================================================

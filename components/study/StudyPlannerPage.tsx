@@ -1,12 +1,11 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { getExamResults } from "../../services/examService";
-import { getTopicProgress, computeSubjectStats, SubjectProgressMap } from "../../services/topicService";
-import { generateRecommendations, Recommendation } from "../../services/coachService";
-import { YKS_SUBJECTS } from "../../lib/constants/subjects";
-import { ExamResult } from "../../types/exam";
+import { useAuth } from "@/context/AuthContext";
+import { getExamResults } from "@/services/examService";
+import { getTopicProgress, computeSubjectStats, SubjectProgressMap } from "@/services/topicService";
+import { YKS_SUBJECTS } from "@/lib/constants/subjects";
+import { ExamResult } from "@/types/exam";
 import {
   Brain,
   BookOpen,
@@ -27,29 +26,6 @@ import Link from "next/link";
 
 // ─── Helper ─────────────────────────────────────────────────────────────────
 
-function getPriorityColor(priority: Recommendation["priority"]) {
-  if (priority === "Yüksek") return "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800";
-  if (priority === "Orta") return "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800";
-  return "text-slate-500 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700";
-}
-
-function getTypeIcon(type: Recommendation["type"]) {
-  switch (type) {
-    case "study": return <BookOpen className="w-4 h-4" />;
-    case "revision": return <RefreshCw className="w-4 h-4" />;
-    case "exam": return <ClipboardList className="w-4 h-4" />;
-    case "motivation": return <Star className="w-4 h-4" />;
-  }
-}
-
-function getTypeStyle(type: Recommendation["type"]) {
-  switch (type) {
-    case "study": return "bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400";
-    case "revision": return "bg-violet-100 dark:bg-violet-900/50 text-violet-600 dark:text-violet-400";
-    case "exam": return "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400";
-    case "motivation": return "bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400";
-  }
-}
 
 // ─── Daily Plan Generator ────────────────────────────────────────────────────
 
@@ -61,14 +37,13 @@ interface DailyTask {
 }
 
 function generateDailyPlan(
-  recs: Recommendation[],
   progressMap: SubjectProgressMap,
   totalHours = 4
 ): DailyTask[] {
   const tasks: DailyTask[] = [];
   let remainingMinutes = totalHours * 60;
 
-  // First: revision tasks (short, high value)
+  // 1. Revision tasks (high priority)
   for (const subject of YKS_SUBJECTS) {
     if (remainingMinutes <= 0) break;
     const data = progressMap[subject.id] ?? {};
@@ -85,21 +60,14 @@ function generateDailyPlan(
     }
   }
 
-  // Second: high-priority recommendations
-  for (const rec of recs.filter((r) => r.priority === "Yüksek" && r.type === "study")) {
-    if (remainingMinutes <= 0) break;
-    const duration = Math.min(rec.estimatedMinutes, remainingMinutes, 90);
-    tasks.push({
-      subject: rec.subject,
-      topic: rec.topic || "Genel çalışma",
-      durationMinutes: duration,
-      type: "new",
-    });
-    remainingMinutes -= duration;
-  }
+  // 2. New topics from subjects with low progress
+  const sortedSubjects = [...YKS_SUBJECTS].sort((a, b) => {
+    const statsA = computeSubjectStats(a.id, a.topics.map(t => t.id), progressMap).progressPct;
+    const statsB = computeSubjectStats(b.id, b.topics.map(t => t.id), progressMap).progressPct;
+    return statsA - statsB;
+  });
 
-  // Third: new topics from subjects with low progress
-  for (const subject of YKS_SUBJECTS) {
+  for (const subject of sortedSubjects) {
     if (remainingMinutes <= 30) break;
     const data = progressMap[subject.id] ?? {};
     const notStarted = subject.topics.filter((t) => !data[t.id] || data[t.id] === "Başlanmadı");
@@ -115,6 +83,16 @@ function generateDailyPlan(
     }
   }
 
+  // 3. Add a general exam prep task if time allows
+  if (remainingMinutes >= 60 && tasks.length < 5) {
+    tasks.push({
+      subject: "Genel Deneme Çözümü",
+      topic: "TYT veya AYT denemesi çöz",
+      durationMinutes: 60,
+      type: "exam_prep",
+    });
+  }
+
   return tasks.slice(0, 6);
 }
 
@@ -124,10 +102,9 @@ export const StudyPlannerPage: React.FC = () => {
   const { user } = useAuth();
   const [progressMap, setProgressMap] = useState<SubjectProgressMap>({});
   const [exams, setExams] = useState<ExamResult[]>([]);
-  const [recs, setRecs] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [dailyHours, setDailyHours] = useState(4);
-  const [activeTab, setActiveTab] = useState<"today" | "coach" | "subjects">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "subjects">("today");
 
   useEffect(() => {
     if (!user) return;
@@ -137,13 +114,11 @@ export const StudyPlannerPage: React.FC = () => {
     ]).then(([pm, ex]) => {
       setProgressMap(pm);
       setExams(ex);
-      const subjectsForCoach = YKS_SUBJECTS.map((s) => ({ id: s.id, name: s.name, topics: s.topics }));
-      setRecs(generateRecommendations(ex, pm, subjectsForCoach));
       setLoading(false);
     });
   }, [user]);
 
-  const dailyPlan = useMemo(() => generateDailyPlan(recs, progressMap, dailyHours), [recs, progressMap, dailyHours]);
+  const dailyPlan = useMemo(() => generateDailyPlan(progressMap, dailyHours), [progressMap, dailyHours]);
   const totalDailyMinutes = dailyPlan.reduce((a, t) => a + t.durationMinutes, 0);
 
   // Subject stats for overview
@@ -179,9 +154,9 @@ export const StudyPlannerPage: React.FC = () => {
           <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Brain className="w-5 h-5 text-blue-600" /> Çalışma Planı
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-            Koç önerileri ve kişisel çalışma programı
-          </p>
+           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+             Kişiselleştirilmiş günlük çalışma programı
+           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-slate-500 dark:text-slate-400">{today}</span>
@@ -196,7 +171,6 @@ export const StudyPlannerPage: React.FC = () => {
       <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1">
         {([
           { id: "today", label: "Bugünkü Plan", icon: <Calendar className="w-3.5 h-3.5" /> },
-          { id: "coach", label: "Koç Önerileri", icon: <Lightbulb className="w-3.5 h-3.5" /> },
           { id: "subjects", label: "Ders Durumu", icon: <BarChart2 className="w-3.5 h-3.5" /> },
         ] as const).map((tab) => (
           <button
@@ -318,56 +292,6 @@ export const StudyPlannerPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── AI COACH TAB ── */}
-      {activeTab === "coach" && (
-        <div className="space-y-3">
-          {/* Disclaimer */}
-          <div className="flex items-start gap-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3">
-            <AlertCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
-            <p className="text-xs text-blue-700 dark:text-blue-300">
-              Öneriler; deneme geçmişin, konu ilerleme durumun ve çalışma sıklığına göre yerel olarak hesaplanır. Harici AI kullanılmaz.
-            </p>
-          </div>
-
-          {recs.map((rec) => (
-            <div
-              key={rec.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4"
-            >
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${getTypeStyle(rec.type)}`}>
-                  {getTypeIcon(rec.type)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="text-sm font-semibold text-slate-900 dark:text-white">{rec.subject}</span>
-                    {rec.topic && <span className="text-xs text-slate-400">· {rec.topic}</span>}
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${getPriorityColor(rec.priority)}`}>
-                      {rec.priority}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{rec.reason}</p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-1 italic">"{rec.motivationSentence}"</p>
-                  <div className="flex items-center gap-3 mt-2 text-[10px] text-slate-400">
-                    {rec.estimatedMinutes > 0 && (
-                      <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {rec.estimatedMinutes} dk</span>
-                    )}
-                    <span className="flex items-center gap-1"><Target className="w-3 h-3" /> {rec.difficulty}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {recs.length === 0 && (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-10 text-center">
-              <Star className="w-10 h-10 mx-auto mb-3 text-amber-500" />
-              <p className="font-semibold text-slate-700 dark:text-slate-300">Mükemmel performans!</p>
-              <p className="text-sm text-slate-500 mt-1">Koç sana şu an için özel bir öneri yapmıyor.</p>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── SUBJECTS STATUS TAB ── */}
       {activeTab === "subjects" && (

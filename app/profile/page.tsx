@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { AppLayout } from "../../components/layout/AppLayout";
-import { saveUserProfile } from "../../services/userService";
-import { SinifOption, AlanOption } from "../../types/user";
+import { useAuth } from "@/context/AuthContext";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { saveUserProfile } from "@/services/userService";
+import { SinifOption, AlanOption } from "@/types/user";
 
 export default function ProfilePage() {
   const { user, userProfile, refreshUserProfile, logout } = useAuth();

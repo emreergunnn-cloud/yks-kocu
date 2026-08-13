@@ -45,23 +45,6 @@ export function AdminRoleBadge({
     );
   }
 
-  if (normalizedRole === "coach") {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-        <BookOpen className="h-3.5 w-3.5" />
-        Koç
-      </span>
-    );
-  }
-
-  if (normalizedRole === "parent") {
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-2.5 py-1 text-xs font-medium text-orange-600 dark:text-orange-400">
-        <Users className="h-3.5 w-3.5" />
-        Veli
-      </span>
-    );
-  }
 
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-500/30 bg-slate-500/10 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-400">

@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { useStreak } from "../../hooks/useStreak";
-import { getTopicProgress, SubjectProgressMap, computeSubjectStats } from "../../services/topicService";
-import { getExamResults } from "../../services/examService";
-import { generateRecommendations, Recommendation } from "../../services/coachService";
-import { YKS_SUBJECTS } from "../../lib/constants/subjects";
-import { ExamResult } from "../../types/exam";
+import { useAuth } from "@/context/AuthContext";
+import { useStreak } from "@/hooks/useStreak";
+import { getTopicProgress, SubjectProgressMap, computeSubjectStats } from "@/services/topicService";
+import { getExamResults } from "@/services/examService";
+import { YKS_SUBJECTS } from "@/lib/constants/subjects";
+import { ExamResult } from "@/types/exam";
 import { Trophy, Star, Flame, Target, BookOpen, ClipboardList, BarChart2, TrendingUp, Lightbulb, ChevronRight, Award } from "lucide-react";
 import Link from "next/link";
 
@@ -16,7 +15,6 @@ export const AchievementsPage: React.FC = () => {
   const { streak, loading: streakLoading } = useStreak();
   const [progressMap, setProgressMap] = useState<SubjectProgressMap>({});
   const [exams, setExams] = useState<ExamResult[]>([]);
-  const [recs, setRecs] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,8 +25,6 @@ export const AchievementsPage: React.FC = () => {
     ]).then(([pm, ex]) => {
       setProgressMap(pm);
       setExams(ex);
-      const subjectsForCoach = YKS_SUBJECTS.map((s) => ({ id: s.id, name: s.name, topics: s.topics }));
-      setRecs(generateRecommendations(ex, pm, subjectsForCoach));
       setLoading(false);
     });
   }, [user]);
@@ -252,43 +248,6 @@ export const AchievementsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* AI Coach Recommendations */}
-      <div>
-        <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-3 uppercase tracking-wider flex items-center gap-2">
-          <Lightbulb className="w-4 h-4 text-amber-500" /> Koç Önerileri
-        </h2>
-        <div className="space-y-2">
-          {recs.map((rec) => (
-            <div key={rec.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 flex items-start gap-3">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                rec.type === "study" ? "bg-blue-100 dark:bg-blue-900/50 text-blue-600" :
-                rec.type === "revision" ? "bg-violet-100 dark:bg-violet-900/50 text-violet-600" :
-                rec.type === "exam" ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600" :
-                "bg-amber-100 dark:bg-amber-900/50 text-amber-600"
-              }`}>
-                {rec.type === "study" ? <BookOpen className="w-4 h-4" /> :
-                 rec.type === "revision" ? <TrendingUp className="w-4 h-4" /> :
-                 rec.type === "exam" ? <ClipboardList className="w-4 h-4" /> :
-                 <Star className="w-4 h-4" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-sm font-semibold text-slate-900 dark:text-white">{rec.subject}</span>
-                  {rec.topic && <span className="text-xs text-slate-400">· {rec.topic}</span>}
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${rec.priority === "Yüksek" ? "bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400" : rec.priority === "Orta" ? "bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
-                    {rec.priority}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{rec.reason}</p>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5 italic">"{rec.motivationSentence}"</p>
-                {rec.estimatedMinutes > 0 && (
-                  <p className="text-[10px] text-slate-400 mt-1">Tahmini süre: {rec.estimatedMinutes} dk • {rec.difficulty}</p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 };

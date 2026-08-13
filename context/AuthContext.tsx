@@ -31,6 +31,7 @@ import {
 } from "../lib/firebase";
 
 import { UserProfile } from "../types/user";
+import { logToServer } from "@/services/logService";
 
 interface AuthContextType {
   user: FirebaseUser | null;
@@ -89,24 +90,23 @@ export const AuthProvider: React.FC<{
   // ---------------------------------------------------------
 
   const fetchUserProfile = async (uid: string) => {
+    logToServer('info', "[AuthContext] Starting fetchUserProfile", { uid });
     try {
       const snap = await getDoc(
         doc(db, "users", uid)
       );
 
       if (snap.exists()) {
+        logToServer('info', "[AuthContext] User profile found in Firestore.");
         setUserProfile(
           snap.data() as UserProfile
         );
       } else {
+        logToServer('warn', "[AuthContext] User profile NOT found in Firestore", { uid });
         setUserProfile(null);
       }
     } catch (error) {
-      console.error(
-        "User profile fetch error:",
-        error
-      );
-
+      logToServer('error', "[AuthContext] FATAL: User profile fetch error", { error });
       setUserProfile(null);
     }
   };
@@ -150,9 +150,11 @@ export const AuthProvider: React.FC<{
   // ---------------------------------------------------------
 
   useEffect(() => {
+    logToServer('info', "[AuthContext] useEffect for onAuthStateChanged mounted.");
     const unsubscribe = onAuthStateChanged(
       auth,
       async (currentUser) => {
+        logToServer('info', "[AuthContext] onAuthStateChanged triggered", { uid: currentUser?.uid || 'null' });
         setUser(currentUser);
 
         if (currentUser) {
@@ -160,9 +162,11 @@ export const AuthProvider: React.FC<{
             currentUser.uid
           );
         } else {
+          logToServer('info', "[AuthContext] No currentUser, setting profile to null.");
           setUserProfile(null);
         }
 
+        logToServer('info', "[AuthContext] Setting loading to false.");
         setLoading(false);
       }
     );

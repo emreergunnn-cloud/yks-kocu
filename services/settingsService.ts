@@ -10,6 +10,7 @@ export interface UserSettings {
   dailyGoalQuestions: number;
   dailyGoalHours: number;
   weeklyGoalExams: number;
+  yksQuoteNotificationEnabled: boolean;
 }
 
 export const DEFAULT_SETTINGS: UserSettings = {
@@ -21,6 +22,7 @@ export const DEFAULT_SETTINGS: UserSettings = {
   dailyGoalQuestions: 150,
   dailyGoalHours: 4,
   weeklyGoalExams: 3,
+  yksQuoteNotificationEnabled: true,
 };
 
 export async function getUserSettings(uid: string): Promise<UserSettings> {

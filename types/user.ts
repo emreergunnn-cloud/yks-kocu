@@ -6,7 +6,7 @@ export type AlanOption =
   | "Sözel"
   | "Dil";
 
-export type UserRole = "student" | "parent" | "coach" | "secretary" | "admin" | "superadmin";
+export type UserRole = "student" | "secretary" | "admin" | "superadmin";
 
 export interface UserProfile {
   uid: string;
@@ -41,6 +41,7 @@ export interface UserProfile {
   examYear?: number;
 
   role?: UserRole;
+  fcmTokens?: string[];
 
   createdAt: any;
   updatedAt?: any;
