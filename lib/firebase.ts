@@ -21,7 +21,7 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 // Initialize Firebase Cloud Messaging and get a reference to the service
-export const messaging = (typeof window !== 'undefined') ? getMessaging(app) : null;
+export const messaging = null;
 
 // TODO: Add your VAPID key from the Firebase console
 export const VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || 'YOUR_VAPID_KEY_HERE';

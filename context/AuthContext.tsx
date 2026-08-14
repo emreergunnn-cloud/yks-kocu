@@ -16,6 +16,7 @@ import {
   sendPasswordResetEmail,
   signOut,
   updateProfile,
+  AuthError,
 } from "firebase/auth";
 
 import {
@@ -23,6 +24,9 @@ import {
   getDoc,
   setDoc,
 } from "firebase/firestore";
+
+import { Capacitor } from "@capacitor/core";
+import { FirebaseAuthentication } from "@capacitor-firebase/authentication";
 
 import {
   auth,
@@ -37,27 +41,21 @@ interface AuthContextType {
   user: FirebaseUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
-
   signInWithGoogle: () => Promise<boolean>;
   signInWithEmail: (
     email: string,
     password: string
   ) => Promise<void>;
-
   registerWithEmail: (
     name: string,
     email: string,
     password: string
   ) => Promise<void>;
-
   sendPasswordReset: (
     email: string
   ) => Promise<void>;
-
   logout: () => Promise<void>;
-
   refreshUserProfile: () => Promise<void>;
-
   getIdToken: () => Promise<string | null>;
 }
 
@@ -65,14 +63,12 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   userProfile: null,
   loading: true,
-
   signInWithGoogle: async () => false,
   signInWithEmail: async () => {},
   registerWithEmail: async () => {},
   sendPasswordReset: async () => {},
   logout: async () => {},
   refreshUserProfile: async () => {},
-
   getIdToken: async () => null,
 });
 
@@ -82,38 +78,39 @@ export const AuthProvider: React.FC<{
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userProfile, setUserProfile] =
     useState<UserProfile | null>(null);
-
   const [loading, setLoading] = useState<boolean>(true);
 
-  // ---------------------------------------------------------
-  // Kullanıcı profilini Firestore'dan getir
-  // ---------------------------------------------------------
-
-  const fetchUserProfile = async (uid: string) => {
-    logToServer('info', "[AuthContext] Starting fetchUserProfile", { uid });
+  const fetchUserProfile = async (uid: string): Promise<boolean> => {
     try {
+      logToServer(
+        "info",
+        "[AuthContext] Starting fetchUserProfile",
+        { uid }
+      );
+
       const snap = await getDoc(
         doc(db, "users", uid)
       );
 
       if (snap.exists()) {
-        logToServer('info', "[AuthContext] User profile found in Firestore.");
         setUserProfile(
           snap.data() as UserProfile
         );
-      } else {
-        logToServer('warn', "[AuthContext] User profile NOT found in Firestore", { uid });
-        setUserProfile(null);
+        return true;
       }
-    } catch (error) {
-      logToServer('error', "[AuthContext] FATAL: User profile fetch error", { error });
+
       setUserProfile(null);
+      return false;
+    } catch (error) {
+      logToServer(
+        "error",
+        "[AuthContext] User profile fetch error",
+        { error }
+      );
+      setUserProfile(null);
+      throw error;
     }
   };
-
-  // ---------------------------------------------------------
-  // Profil yenile
-  // ---------------------------------------------------------
 
   const refreshUserProfile = async () => {
     if (user?.uid) {
@@ -121,52 +118,105 @@ export const AuthProvider: React.FC<{
     }
   };
 
-  // ---------------------------------------------------------
-  // Firebase ID Token
-  // API isteklerinde kullanılacak
-  // ---------------------------------------------------------
-
-  const getIdToken = async (): Promise<
-    string | null
-  > => {
+  const getIdToken = async (): Promise<string | null> => {
     try {
       if (!user) {
         return null;
       }
 
-      return await user.getIdToken();
+      return await user.getIdToken(true);
     } catch (error) {
-      console.error(
-        "Firebase ID token error:",
-        error
+      logToServer(
+        "error",
+        "[AuthContext] getIdToken error",
+        { error }
       );
-
       return null;
     }
   };
 
-  // ---------------------------------------------------------
-  // Auth state
-  // ---------------------------------------------------------
+  const createNewUserProfile = async (
+    firebaseUser: FirebaseUser
+  ) => {
+    const newUserProfile: UserProfile = {
+      uid: firebaseUser.uid,
+      adSoyad:
+        firebaseUser.displayName ||
+        "Yeni Kullanıcı",
+      email: firebaseUser.email || "",
+      role: "student",
+      onboardingCompleted: false,
+      sinif: "",
+      alan: "",
+      hedefUniversite: "",
+      hedefBolum: "",
+      hedefSiralama: 0,
+      diplomaNotu: 0,
+      obp: 0,
+      currentTYT: 0,
+      currentAYT: 0,
+      targetTYT: 0,
+      targetAYT: 0,
+      studyDays: 0,
+      studyHours: 0,
+      examYear:
+        new Date().getFullYear() + 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await setDoc(
+      doc(
+        db,
+        "users",
+        firebaseUser.uid
+      ),
+      newUserProfile
+    );
+
+    setUserProfile(newUserProfile);
+  };
 
   useEffect(() => {
-    logToServer('info', "[AuthContext] useEffect for onAuthStateChanged mounted.");
     const unsubscribe = onAuthStateChanged(
       auth,
-      async (currentUser) => {
-        logToServer('info', "[AuthContext] onAuthStateChanged triggered", { uid: currentUser?.uid || 'null' });
-        setUser(currentUser);
+      async (firebaseUser) => {
+        setLoading(true);
 
-        if (currentUser) {
-          await fetchUserProfile(
-            currentUser.uid
+        if (firebaseUser) {
+          logToServer(
+            "info",
+            "[AuthContext] Firebase user logged in",
+            {
+              uid: firebaseUser.uid,
+            }
           );
+
+          setUser(firebaseUser);
+
+          try {
+            const profileExists =
+              await fetchUserProfile(
+                firebaseUser.uid
+              );
+
+            if (!profileExists) {
+              await createNewUserProfile(
+                firebaseUser
+              );
+            }
+          } catch (error) {
+            logToServer(
+              "error",
+              "[AuthContext] Profile loading failed",
+              { error }
+            );
+          }
         } else {
-          logToServer('info', "[AuthContext] No currentUser, setting profile to null.");
+          setUser(null);
           setUserProfile(null);
         }
 
-        logToServer('info', "[AuthContext] Setting loading to false.");
         setLoading(false);
       }
     );
@@ -174,103 +224,120 @@ export const AuthProvider: React.FC<{
     return () => unsubscribe();
   }, []);
 
-  // ---------------------------------------------------------
-  // Google Login
-  // ---------------------------------------------------------
+  const signInWithGoogle =
+    async (): Promise<boolean> => {
+      setLoading(true);
 
-  const signInWithGoogle = async (): Promise<boolean> => {
-  setLoading(true);
+      try {
+        /*
+         * ANDROID / CAPACITOR
+         * Native Google Sign-In
+         */
+        if (Capacitor.isNativePlatform()) {
+          logToServer(
+            "info",
+            "[AuthContext] Starting native Google sign-in"
+          );
 
-  try {
-    const result = await signInWithPopup(
-      auth,
-      provider
-    );
+          const result =
+            await FirebaseAuthentication.signInWithGoogle();
 
-    const googleUser = result.user;
+          if (!result.credential?.idToken) {
+            throw new Error(
+              "Google girişinden Firebase ID token alınamadı."
+            );
+          }
 
-    setUser(googleUser);
+          /*
+           * Native plugin Firebase Authentication
+           * oturumunu Firebase Web SDK ile senkronize etmek
+           * için credential bilgisini kullanıyoruz.
+           */
+          const {
+            GoogleAuthProvider,
+            signInWithCredential,
+          } = await import(
+            "firebase/auth"
+          );
 
-    const userRef = doc(
-      db,
-      "users",
-      googleUser.uid
-    );
+          const credential =
+            GoogleAuthProvider.credential(
+              result.credential.idToken
+            );
 
-    const userSnap = await getDoc(userRef);
+          const firebaseResult =
+            await signInWithCredential(
+              auth,
+              credential
+            );
 
-    // Google ile ilk kez giriş yapan kullanıcı
-    if (!userSnap.exists()) {
-      await setDoc(userRef, {
-        uid: googleUser.uid,
+          setUser(firebaseResult.user);
 
-        adSoyad:
-          googleUser.displayName || "",
+          const profileExists =
+            await fetchUserProfile(
+              firebaseResult.user.uid
+            );
 
-        email:
-          googleUser.email || "",
+          if (!profileExists) {
+            await createNewUserProfile(
+              firebaseResult.user
+            );
 
-        role: "student",
+            return true;
+          }
 
-        onboardingCompleted: false,
+          return false;
+        }
 
-        sinif: "",
-        alan: "",
+        /*
+         * WEB
+         * Mevcut çalışan Google Popup sistemi
+         */
+        const result =
+          await signInWithPopup(
+            auth,
+            provider
+          );
 
-        hedefUniversite: "",
-        hedefBolum: "",
-        hedefSiralama: 0,
+        setUser(result.user);
 
-        diplomaNotu: 0,
-        obp: 0,
+        const profileExists =
+          await fetchUserProfile(
+            result.user.uid
+          );
 
-        currentTYT: 0,
-        currentAYT: 0,
+        if (!profileExists) {
+          await createNewUserProfile(
+            result.user
+          );
 
-        targetTYT: 0,
-        targetAYT: 0,
+          return true;
+        }
 
-        studyDays: 0,
-        studyHours: 0,
+        return false;
+      } catch (error) {
+        const authError =
+          error as AuthError;
 
-        examYear:
-          new Date().getFullYear() + 1,
+        logToServer(
+          "error",
+          "[AuthContext] Google sign-in error",
+          {
+            code: authError.code,
+            message: authError.message,
+          }
+        );
 
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+        console.error(
+          "[AuthContext] Google sign-in error:",
+          error
+        );
 
-      await fetchUserProfile(
-        googleUser.uid
-      );
-
-      // İlk Google kaydı → onboarding
-      return true;
-    }
-
-    // Mevcut kullanıcının profilini al
-    const profile =
-      userSnap.data() as UserProfile;
-
-    setUserProfile(profile);
-
-    // Profil var ama onboarding tamamlanmamış
-    if (
-      profile.onboardingCompleted !== true
-    ) {
-      return true;
-    }
-
-    // Onboarding tamamlanmış
-    return false;
-  } finally {
-    setLoading(false);
-  }
-};
-
-  // ---------------------------------------------------------
-  // Email Login
-  // ---------------------------------------------------------
+        throw authError;
+      } finally {
+        setLoading(false);
+      }
+    };
 
   const signInWithEmail = async (
     email: string,
@@ -288,17 +355,35 @@ export const AuthProvider: React.FC<{
 
       setUser(result.user);
 
-      await fetchUserProfile(
-        result.user.uid
+      const profileExists =
+        await fetchUserProfile(
+          result.user.uid
+        );
+
+      if (!profileExists) {
+        await createNewUserProfile(
+          result.user
+        );
+      }
+    } catch (error) {
+      const authError =
+        error as AuthError;
+
+      logToServer(
+        "error",
+        "[AuthContext] Email sign-in error",
+        {
+          code: authError.code,
+          message: authError.message,
+          email,
+        }
       );
+
+      throw authError;
     } finally {
       setLoading(false);
     }
   };
-
-  // ---------------------------------------------------------
-  // Email Register
-  // ---------------------------------------------------------
 
   const registerWithEmail = async (
     name: string,
@@ -315,86 +400,120 @@ export const AuthProvider: React.FC<{
           password
         );
 
-      await updateProfile(result.user, {
-        displayName: name,
-      });
-
-      await setDoc(
-        doc(db, "users", result.user.uid),
+      await updateProfile(
+        result.user,
         {
-          uid: result.user.uid,
-
-          adSoyad: name,
-          email: email,
-
-          role: "student",
-
-          onboardingCompleted: false,
-
-          sinif: "",
-          alan: "",
-
-          hedefUniversite: "",
-          hedefBolum: "",
-          hedefSiralama: 0,
-
-          diplomaNotu: 0,
-          obp: 0,
-
-          currentTYT: 0,
-          currentAYT: 0,
-
-          targetTYT: 0,
-          targetAYT: 0,
-
-          studyDays: 0,
-          studyHours: 0,
-
-          examYear:
-            new Date().getFullYear() + 1,
-
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          displayName: name,
         }
       );
 
-      setUser(result.user);
+      const newUser =
+        result.user;
 
-      await fetchUserProfile(
-        result.user.uid
+      const newUserProfileData:
+        UserProfile = {
+        uid: newUser.uid,
+        adSoyad: name,
+        email,
+        role: "student",
+        onboardingCompleted: false,
+        sinif: "",
+        alan: "",
+        hedefUniversite: "",
+        hedefBolum: "",
+        hedefSiralama: 0,
+        diplomaNotu: 0,
+        obp: 0,
+        currentTYT: 0,
+        currentAYT: 0,
+        targetTYT: 0,
+        targetAYT: 0,
+        studyDays: 0,
+        studyHours: 0,
+        examYear:
+          new Date().getFullYear() + 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      await setDoc(
+        doc(
+          db,
+          "users",
+          newUser.uid
+        ),
+        newUserProfileData
       );
+
+      setUser(newUser);
+      setUserProfile(
+        newUserProfileData
+      );
+    } catch (error) {
+      const authError =
+        error as AuthError;
+
+      logToServer(
+        "error",
+        "[AuthContext] Email registration error",
+        {
+          code: authError.code,
+          message: authError.message,
+          email,
+        }
+      );
+
+      throw authError;
     } finally {
       setLoading(false);
     }
   };
 
-  // ---------------------------------------------------------
-  // Şifre sıfırlama
-  // ---------------------------------------------------------
-
   const sendPasswordReset = async (
     email: string
   ) => {
-    await sendPasswordResetEmail(
-      auth,
-      email
-    );
+    try {
+      await sendPasswordResetEmail(
+        auth,
+        email
+      );
+    } catch (error) {
+      const authError =
+        error as AuthError;
+
+      logToServer(
+        "error",
+        "[AuthContext] Password reset error",
+        {
+          code: authError.code,
+          message: authError.message,
+          email,
+        }
+      );
+
+      throw authError;
+    }
   };
 
-  // ---------------------------------------------------------
-  // Logout
-  // ---------------------------------------------------------
-
   const logout = async () => {
+    try {
+      if (
+        Capacitor.isNativePlatform()
+      ) {
+        await FirebaseAuthentication.signOut();
+      }
+    } catch (error) {
+      console.warn(
+        "[AuthContext] Native sign out warning:",
+        error
+      );
+    }
+
     await signOut(auth);
 
     setUser(null);
     setUserProfile(null);
   };
-
-  // ---------------------------------------------------------
-  // Provider
-  // ---------------------------------------------------------
 
   return (
     <AuthContext.Provider
@@ -402,17 +521,12 @@ export const AuthProvider: React.FC<{
         user,
         userProfile,
         loading,
-
         signInWithGoogle,
         signInWithEmail,
         registerWithEmail,
-
         sendPasswordReset,
-
         logout,
-
         refreshUserProfile,
-
         getIdToken,
       }}
     >
@@ -420,10 +534,6 @@ export const AuthProvider: React.FC<{
     </AuthContext.Provider>
   );
 };
-
-// ---------------------------------------------------------
-// Hook
-// ---------------------------------------------------------
 
 export const useAuth = () =>
   useContext(AuthContext);

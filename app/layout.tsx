@@ -20,17 +20,21 @@ export const metadata: Metadata = {
     default: "YKS Koçu",
     template: "%s | YKS Koçu",
   },
-  description: "YKS deneme takibi, konu takibi ve kişiselleştirilmiş çalışma planı",
+  description:
+    "YKS deneme takibi, konu takibi ve kişiselleştirilmiş çalışma planı",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "YKS Koçu",
   },
-  formatDetection: { telephone: false },
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: "YKS Koçu",
-    description: "YKS deneme takibi, net analizi ve kişiselleştirilmiş öğrenci danışmanlığı",
+    description:
+      "YKS deneme takibi, net analizi ve kişiselleştirilmiş öğrenci danışmanlığı",
     type: "website",
     locale: "tr_TR",
   },
@@ -51,6 +55,7 @@ export default function RootLayout({
   return (
     <html
       lang="tr"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
@@ -59,6 +64,7 @@ export default function RootLayout({
             {children}
           </ThemeProvider>
         </AuthProvider>
+
         <ServiceWorkerRegistrar />
       </body>
     </html>

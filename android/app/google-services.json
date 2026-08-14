@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "551440834645",
+    "project_id": "yks-kocu-cfd78",
+    "storage_bucket": "yks-kocu-cfd78.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:551440834645:android:acdc6205e83cad68c5f4dc",
+        "android_client_info": {
+          "package_name": "com.ykskocu.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "551440834645-f9ova6hiu51jo80hlpjfopb668ucnhk8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ykskocu.app",
+            "certificate_hash": "c2952c22b40151ba5663b3a2c1ec2f826d26030d"
+          }
+        },
+        {
+          "client_id": "551440834645-sp8s4e5l5itp4ojua0agkmlvsc76371s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAp5NyvfrBlXK42ijBOIyBbN1WZYcUndGs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "551440834645-sp8s4e5l5itp4ojua0agkmlvsc76371s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
