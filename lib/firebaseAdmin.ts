@@ -1,30 +1,26 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import fs from "fs";
-import path from "path";
 
-const serviceAccountPath = path.resolve(
-  /*turbopackIgnore: true*/ process.cwd(),
-  process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH ||
-    "./firebase-service-account.json"
-);
+const projectId = process.env.FIREBASE_ADMIN_PROJECT_ID;
+const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, "\n");
 
-if (!fs.existsSync(serviceAccountPath)) {
+if (!projectId || !clientEmail || !privateKey) {
   throw new Error(
-    `Firebase service account not found: ${serviceAccountPath}`
+    "Firebase Admin environment variables are missing. Check FIREBASE_ADMIN_PROJECT_ID, FIREBASE_ADMIN_CLIENT_EMAIL and FIREBASE_ADMIN_PRIVATE_KEY."
   );
 }
-
-const serviceAccount = JSON.parse(
-  fs.readFileSync(serviceAccountPath, "utf8")
-);
 
 const adminApp =
   getApps().length > 0
     ? getApps()[0]
     : initializeApp({
-        credential: cert(serviceAccount),
+        credential: cert({
+          projectId,
+          clientEmail,
+          privateKey,
+        }),
       });
 
 export const adminAuth = getAuth(adminApp);

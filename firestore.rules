@@ -3,10 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ============================================================
-    // YARDIMCI FONKSİYONLAR
-    // ============================================================
-
     function signedIn() {
       return request.auth != null;
     }
@@ -18,34 +14,17 @@ service cloud.firestore {
     function isAdmin() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin" ||
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin" ||
-            get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "super_admin");
+        && (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin" ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin" ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "super_admin"
+        );
     }
-
-
-    // ============================================================
-    // USERS
-    // users/{uid}
-    // ============================================================
 
     match /users/{uid} {
 
-      // ----------------------------------------------------------
-      // READ
-      // ----------------------------------------------------------
-      // Kullanıcı sadece kendi profilini okuyabilir.
-      // Admin bütün kullanıcı profillerini okuyabilir.
       allow read: if isOwner(uid) || isAdmin();
 
-      // ----------------------------------------------------------
-      // CREATE
-      // ----------------------------------------------------------
-      // Normal kullanıcı yalnızca kendi UID'siyle ve student
-      // rolüyle profil oluşturabilir.
-      //
-      // Admin kullanıcı oluşturabilir.
-      // ----------------------------------------------------------
       allow create: if isAdmin()
         || (
           isOwner(uid)
@@ -53,18 +32,6 @@ service cloud.firestore {
           && request.resource.data.role == "student"
         );
 
-      // ----------------------------------------------------------
-      // UPDATE
-      // ----------------------------------------------------------
-      // Normal kullanıcı:
-      // - sadece kendi profilini güncelleyebilir
-      // - UID değiştiremez
-      // - role değiştiremez
-      // - createdAt değiştiremez
-      //
-      // Admin:
-      // - tüm kullanıcıları güncelleyebilir
-      // ----------------------------------------------------------
       allow update: if isAdmin()
         || (
           isOwner(uid)
@@ -73,92 +40,51 @@ service cloud.firestore {
           && request.resource.data.createdAt == resource.data.createdAt
         );
 
-      // ----------------------------------------------------------
-      // DELETE
-      // ----------------------------------------------------------
-      // Normal kullanıcı kendi profilini silemez.
-      // Sadece admin silebilir.
-      // ----------------------------------------------------------
       allow delete: if isAdmin();
-
-      // ==========================================================
-      // CALENDAR EVENTS
-      // users/{uid}/calendarEvents/{eventId}
-      // ==========================================================
 
       match /calendarEvents/{eventId} {
         allow read, write: if isOwner(uid) || isAdmin();
       }
 
-      // ==========================================================
-      // STUDY SESSIONS
-      // users/{uid}/studySessions/{sessionId}
-      // ==========================================================
-
       match /studySessions/{sessionId} {
         allow read, write: if isOwner(uid) || isAdmin();
       }
 
-      // ==========================================================
-      // NOTIFICATIONS
-      // users/{uid}/notifications/{notificationId}
-      // ==========================================================
+      match /studyPlans/{planId} {
+        allow read, write: if isOwner(uid) || isAdmin();
+      }
 
       match /notifications/{notificationId} {
         allow read, write: if isOwner(uid) || isAdmin();
       }
 
-      // ==========================================================
-      // SETTINGS
-      // users/{uid}/settings/{settingId}
-      // ==========================================================
-
       match /settings/{settingId} {
         allow read, write: if isOwner(uid) || isAdmin();
       }
-
-      // ==========================================================
-      // STATS / STREAK
-      // users/{uid}/stats/{statId}
-      // ==========================================================
 
       match /stats/{statId} {
         allow read, write: if isOwner(uid) || isAdmin();
       }
 
-      // ==========================================================
-      // TOPIC PROGRESS
-      // users/{uid}/topicProgress/{progressId}
-      // ==========================================================
-
       match /topicProgress/{progressId} {
         allow read, write: if isOwner(uid) || isAdmin();
       }
-
     }
-
-    // ============================================================
-    // EXAM RESULTS
-    // exam_results/{examId}
-    // ============================================================
 
     match /exam_results/{examId} {
 
-      // Sadece sahibi veya admin okuyabilir.
       allow read: if isAdmin()
         || (
           signedIn()
           && resource.data.uid == request.auth.uid
         );
 
-      // Yeni sınavda UID mutlaka giriş yapan kullanıcı olmalı.
       allow create: if isAdmin()
         || (
           signedIn()
           && request.resource.data.uid == request.auth.uid
         );
 
-      // Kullanıcı sınavı güncelleyebilir ama UID'yi değiştiremez.
       allow update: if isAdmin()
         || (
           signedIn()
@@ -166,17 +92,12 @@ service cloud.firestore {
           && request.resource.data.uid == request.auth.uid
         );
 
-      // Sadece sahibi veya admin silebilir.
       allow delete: if isAdmin()
         || (
           signedIn()
           && resource.data.uid == request.auth.uid
         );
     }
-
-    // ============================================================
-    // TANIMSIZ BÜTÜN KOLEKSİYONLARI KAPAT
-    // ============================================================
 
     match /{document=**} {
       allow read, write: if false;
