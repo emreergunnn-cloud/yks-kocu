@@ -1,0 +1,40 @@
+import {
+  makeTopics,
+} from "../builders";
+
+export const AYT_MATEMATIK_TOPICS =
+  makeTopics([
+    ["am_fonksiyonlar", "Fonksiyonlar"],
+    ["am_polinomlar", "Polinomlar"],
+    ["am_ikinci_derece", "İkinci Dereceden Denklemler"],
+    ["am_karmasik", "Karmaşık Sayılar"],
+    ["am_parabol", "Parabol"],
+    ["am_esitsizlik", "İkinci Dereceden Eşitsizlikler"],
+    ["am_permutasyon", "Permütasyon"],
+    ["am_kombinasyon", "Kombinasyon"],
+    ["am_binom", "Binom"],
+    ["am_olasilik", "Olasılık"],
+    ["am_trigonometri", "Trigonometri"],
+    ["am_logaritma", "Logaritma"],
+    ["am_diziler", "Diziler"],
+    ["am_limit", "Limit ve Süreklilik"],
+    ["am_turev", "Türev"],
+    ["am_integral", "İntegral"],
+    ["am_analitik", "Analitik Geometri"],
+
+    ["ag_temel", "Geometri: Temel Geometrik Kavramlar"],
+    ["ag_acilar", "Geometri: Doğruda ve Üçgende Açılar"],
+    ["ag_kenar", "Geometri: Üçgende Kenar Bağıntıları"],
+    ["ag_ozel_ucgen", "Geometri: Özel Üçgenler"],
+    ["ag_alan", "Geometri: Üçgende Alan"],
+    ["ag_benzerlik", "Geometri: Üçgende Benzerlik"],
+    ["ag_aciortay", "Geometri: Açıortay ve Kenarortay"],
+    ["ag_dortgen", "Geometri: Dörtgenler ve Çokgenler"],
+    ["ag_yamuk", "Geometri: Yamuk ve Paralelkenar"],
+    ["ag_ozel_dortgen", "Geometri: Eşkenar Dörtgen, Dikdörtgen ve Kare"],
+    ["ag_cember", "Geometri: Çember ve Daire"],
+    ["ag_analitik", "Geometri: Analitik Geometri"],
+    ["ag_cember_analitik", "Geometri: Çemberin Analitik İncelenmesi"],
+    ["ag_donusum", "Geometri: Dönüşüm Geometrisi"],
+    ["ag_kati", "Geometri: Katı Cisimler"],
+  ]);

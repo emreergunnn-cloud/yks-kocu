@@ -1,83 +1,116 @@
-import { YKS_SUBJECTS } from "@/lib/constants/subjects";
+import {
+  YKS_SUBJECTS,
+} from "@/lib/constants/subjects";
 
 import {
   computeSubjectStats,
   type SubjectProgressMap,
 } from "@/services/topicService";
 
-import type { AlanOption } from "@/types/user";
-import type { StudyTask } from "@/types/studyPlan";
+import type {
+  AlanOption,
+} from "@/types/user";
 
-import { getTopicDuration } from "./topicDifficulty";
-import { getQuestionCount } from "./questionCalculator";
-
-import {
-  getNewTopicPriority,
-  resolveTaskType,
-} from "./studyRules";
+import type {
+  StudyAssignmentCounts,
+  StudyTask,
+} from "@/types/studyPlan";
 
 import {
   isSubjectAllowedForTrack,
 } from "./trackRules";
 
-export function getStudyPlanCandidates(
-  progressMap: SubjectProgressMap,
-  alan: AlanOption | "" = ""
-): StudyTask[] {
-  const candidates: StudyTask[] = [];
+import {
+  buildStudyCandidate,
+} from "./candidates/buildStudyCandidate";
 
-  for (const subject of YKS_SUBJECTS) {
-    if (!isSubjectAllowedForTrack(subject, alan)) {
+export function getStudyPlanCandidates(
+  progressMap:
+    SubjectProgressMap,
+
+  alan:
+    AlanOption | "" = "",
+
+  assignmentCounts:
+    StudyAssignmentCounts = {}
+): StudyTask[] {
+  const candidates:
+    StudyTask[] = [];
+
+  for (
+    const subject
+    of YKS_SUBJECTS
+  ) {
+    if (
+      !isSubjectAllowedForTrack(
+        subject,
+        alan
+      )
+    ) {
       continue;
     }
 
-    const stats = computeSubjectStats(
-      subject.id,
-      subject.topics.map((topic) => topic.id),
-      progressMap
-    );
+    const stats =
+      computeSubjectStats(
+        subject.id,
 
-    subject.topics.forEach((topic, index) => {
-      const status =
-        progressMap[subject.id]?.[topic.id];
-
-      const resolved =
-        resolveTaskType(status);
-
-      if (!resolved) {
-        return;
-      }
-
-      const priority =
-        resolved.type === "new"
-          ? getNewTopicPriority(index, stats.progressPct)
-          : resolved.priority;
-
-      const durationMinutes =
-        getTopicDuration(topic.name);
-
-      candidates.push({
-        id: `${subject.id}-${topic.id}`,
-        subjectId: subject.id,
-        subject: subject.name,
-        topicId: topic.id,
-        topic: topic.name,
-        category: subject.category,
-        durationMinutes,
-        questionCount: getQuestionCount(
-          durationMinutes,
-          resolved.type
+        subject.topics.map(
+          (topic) =>
+            topic.id
         ),
-        type: resolved.type,
-        priority,
-      });
-    });
+
+        progressMap
+      );
+
+    subject.topics.forEach(
+      (topic, topicIndex) => {
+        const candidate =
+          buildStudyCandidate({
+            subjectId:
+              subject.id,
+
+            subjectName:
+              subject.name,
+
+            category:
+              subject.category,
+
+            topicId:
+              topic.id,
+
+            topicName:
+              topic.name,
+
+            topicIndex,
+
+            subjectProgressPct:
+              stats.progressPct,
+
+            progressMap,
+            alan,
+            assignmentCounts,
+          });
+
+        if (candidate) {
+          candidates.push(
+            candidate
+          );
+        }
+      }
+    );
   }
 
   return candidates.sort(
     (a, b) =>
-      b.priority - a.priority ||
-      a.subject.localeCompare(b.subject, "tr") ||
-      a.topic.localeCompare(b.topic, "tr")
+      b.priority -
+        a.priority ||
+      a.subject.localeCompare(
+        b.subject,
+        "tr"
+      ) ||
+      a.topic.localeCompare(
+        b.topic,
+        "tr"
+      )
   );
 }

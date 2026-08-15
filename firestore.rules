@@ -8,31 +8,46 @@ service cloud.firestore {
     }
 
     function isOwner(uid) {
-      return signedIn() && request.auth.uid == uid;
+      return signedIn()
+        && request.auth.uid == uid;
     }
 
     function isAdmin() {
       return signedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && exists(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        )
         && (
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin" ||
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superadmin" ||
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "super_admin"
+          get(
+            /databases/$(database)/documents/users/$(request.auth.uid)
+          ).data.role == "admin"
+          ||
+          get(
+            /databases/$(database)/documents/users/$(request.auth.uid)
+          ).data.role == "superadmin"
+          ||
+          get(
+            /databases/$(database)/documents/users/$(request.auth.uid)
+          ).data.role == "super_admin"
         );
     }
 
     match /users/{uid} {
 
-      allow read: if isOwner(uid) || isAdmin();
+      allow read:
+        if isOwner(uid)
+        || isAdmin();
 
-      allow create: if isAdmin()
+      allow create:
+        if isAdmin()
         || (
           isOwner(uid)
           && request.resource.data.uid == request.auth.uid
           && request.resource.data.role == "student"
         );
 
-      allow update: if isAdmin()
+      allow update:
+        if isAdmin()
         || (
           isOwner(uid)
           && request.resource.data.uid == resource.data.uid
@@ -40,59 +55,84 @@ service cloud.firestore {
           && request.resource.data.createdAt == resource.data.createdAt
         );
 
-      allow delete: if isAdmin();
+      allow delete:
+        if isAdmin();
 
       match /calendarEvents/{eventId} {
-        allow read, write: if isOwner(uid) || isAdmin();
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
       }
 
       match /studySessions/{sessionId} {
-        allow read, write: if isOwner(uid) || isAdmin();
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
       }
 
       match /studyPlans/{planId} {
-        allow read, write: if isOwner(uid) || isAdmin();
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
+      }
+
+      match /studyMeta/{documentId} {
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
       }
 
       match /notifications/{notificationId} {
-        allow read, write: if isOwner(uid) || isAdmin();
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
       }
 
       match /settings/{settingId} {
-        allow read, write: if isOwner(uid) || isAdmin();
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
       }
 
       match /stats/{statId} {
-        allow read, write: if isOwner(uid) || isAdmin();
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
       }
 
       match /topicProgress/{progressId} {
-        allow read, write: if isOwner(uid) || isAdmin();
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
       }
     }
 
     match /exam_results/{examId} {
 
-      allow read: if isAdmin()
+      allow read:
+        if isAdmin()
         || (
           signedIn()
           && resource.data.uid == request.auth.uid
         );
 
-      allow create: if isAdmin()
+      allow create:
+        if isAdmin()
         || (
           signedIn()
           && request.resource.data.uid == request.auth.uid
         );
 
-      allow update: if isAdmin()
+      allow update:
+        if isAdmin()
         || (
           signedIn()
           && resource.data.uid == request.auth.uid
           && request.resource.data.uid == request.auth.uid
         );
 
-      allow delete: if isAdmin()
+      allow delete:
+        if isAdmin()
         || (
           signedIn()
           && resource.data.uid == request.auth.uid

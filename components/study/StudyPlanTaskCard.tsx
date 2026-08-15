@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+
 import {
   BookOpen,
   Brain,
@@ -9,45 +10,64 @@ import {
   Target,
 } from "lucide-react";
 
-import type { StudyTask } from "@/types/studyPlan";
+import type {
+  StudyTask,
+} from "@/types/studyPlan";
 
-interface StudyPlanTaskCardProps {
+import {
+  ExamImpactBadge,
+} from "./ExamImpactBadge";
+
+interface Props {
   task: StudyTask;
   index: number;
 }
 
-export const StudyPlanTaskCard: React.FC<
-  StudyPlanTaskCardProps
-> = ({ task, index }) => {
+export const StudyPlanTaskCard:
+  React.FC<Props> = ({
+  task,
+  index,
+}) => {
   const typeConfig = {
     revision: {
       label: "Tekrar",
       icon: RotateCcw,
+
       badge:
         "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
+
       number:
         "bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300",
     },
+
     weak: {
       label: "Çalışılıyor",
       icon: Target,
+
       badge:
         "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800",
+
       number:
         "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
     },
+
     new: {
       label: "Yeni Konu",
       icon: BookOpen,
+
       badge:
         "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
+
       number:
         "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300",
     },
   } as const;
 
-  const config = typeConfig[task.type];
-  const Icon = config.icon;
+  const config =
+    typeConfig[task.type];
+
+  const Icon =
+    config.icon;
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
@@ -76,7 +96,7 @@ export const StudyPlanTaskCard: React.FC<
             </span>
           </div>
 
-          <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 truncate">
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
             {task.topic}
           </p>
 
@@ -91,6 +111,14 @@ export const StudyPlanTaskCard: React.FC<
               {task.questionCount} soru
             </span>
           </div>
+
+          {task.examImpact && (
+            <ExamImpactBadge
+              impact={
+                task.examImpact
+              }
+            />
+          )}
         </div>
       </div>
     </div>

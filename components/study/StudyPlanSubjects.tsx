@@ -80,11 +80,7 @@ export function StudyPlanSubjects({
               return true;
             }
 
-            if (
-              subject.category === "TYT+AYT"
-            ) {
-              return true;
-            }
+            
 
             return false;
           }

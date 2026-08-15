@@ -11,6 +11,10 @@ import type {
   TaskRecommendation,
 } from "@/types/recommendation";
 
+import {
+  openExternalUrl,
+} from "@/lib/native/openExternalUrl";
+
 const LEVEL_LABEL = {
   beginner: "Başlangıç",
   intermediate: "Orta",
@@ -33,14 +37,26 @@ export function StudyTaskResources({
     reason,
   } = recommendation;
 
+  async function handleVideoOpen() {
+    try {
+      await openExternalUrl(
+        video.url
+      );
+    } catch (error) {
+      console.error(
+        "YouTube bağlantısı açılamadı:",
+        error
+      );
+    }
+  }
+
   return (
-    <div className="mt-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-3 space-y-3">
+    <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 space-y-3 dark:border-slate-800 dark:bg-slate-950/40">
       <div className="flex items-center gap-2 flex-wrap">
         <TrendingUp className="w-4 h-4 text-emerald-500" />
 
         <span className="text-xs font-semibold">
-          Kaynak seviyesi:
-          {" "}
+          Kaynak seviyesi:{" "}
           {LEVEL_LABEL[level]}
         </span>
 
@@ -61,7 +77,7 @@ export function StudyTaskResources({
           key={book.id}
           className="flex items-start gap-2"
         >
-          <BookOpen className="w-4 h-4 mt-0.5 text-blue-500" />
+          <BookOpen className="w-4 h-4 mt-0.5 shrink-0 text-blue-500" />
 
           <div>
             <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
@@ -77,13 +93,14 @@ export function StudyTaskResources({
         </div>
       ))}
 
-      <a
-        href={video.url}
-        target="_blank"
-        rel="noreferrer"
-        className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400 font-medium"
+      <button
+        type="button"
+        onClick={() =>
+          void handleVideoOpen()
+        }
+        className="flex items-center gap-2 text-left text-xs font-medium text-red-600 dark:text-red-400"
       >
-        <PlayCircle className="w-4 h-4" />
+        <PlayCircle className="w-4 h-4 shrink-0" />
 
         <span>
           {video.channel}
@@ -91,8 +108,8 @@ export function StudyTaskResources({
           {video.title}
         </span>
 
-        <ExternalLink className="w-3 h-3" />
-      </a>
+        <ExternalLink className="w-3 h-3 shrink-0" />
+      </button>
     </div>
   );
 }
