@@ -11,20 +11,24 @@ import {
 } from "@/lib/study/planGenerator";
 
 import {
-  getStudyPlanAssignmentCounts,
-} from "@/services/studyPlanService";
+  getStudyTaskProgress,
+} from "@/services/studyTaskProgressService";
 
 import type {
   SubjectProgressMap,
 } from "@/services/topicService";
 
 import type {
+  StudyTaskProgressMap,
+} from "@/types/studyTaskProgress";
+
+import type {
   AlanOption,
 } from "@/types/user";
 
-import type {
-  StudyAssignmentCounts,
-} from "@/types/studyPlan";
+import {
+  usePendingStudyTaskIds,
+} from "./usePendingStudyTaskIds";
 
 interface Options {
   uid?: string | null;
@@ -48,11 +52,45 @@ export function useAdaptiveStudyPlan({
   refreshKey,
 }: Options) {
   const [
-    assignmentCounts,
-    setAssignmentCounts,
+    taskProgress,
+    setTaskProgress,
   ] = useState<
-    StudyAssignmentCounts
+    StudyTaskProgressMap
   >({});
+
+  const [
+    revision,
+    setRevision,
+  ] =
+    useState(0);
+
+  const {
+    pendingTaskIds,
+  } =
+    usePendingStudyTaskIds(
+      uid ?? null
+    );
+
+  useEffect(() => {
+    function refresh() {
+      setRevision(
+        (value) =>
+          value + 1
+      );
+    }
+
+    window.addEventListener(
+      "study-progress-updated",
+      refresh
+    );
+
+    return () => {
+      window.removeEventListener(
+        "study-progress-updated",
+        refresh
+      );
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -60,7 +98,7 @@ export function useAdaptiveStudyPlan({
     async function load() {
       if (!uid) {
         if (active) {
-          setAssignmentCounts(
+          setTaskProgress(
             {}
           );
         }
@@ -68,14 +106,14 @@ export function useAdaptiveStudyPlan({
         return;
       }
 
-      const counts =
-        await getStudyPlanAssignmentCounts(
+      const progress =
+        await getStudyTaskProgress(
           uid
         );
 
       if (active) {
-        setAssignmentCounts(
-          counts
+        setTaskProgress(
+          progress
         );
       }
     }
@@ -88,6 +126,7 @@ export function useAdaptiveStudyPlan({
   }, [
     uid,
     refreshKey,
+    revision,
   ]);
 
   return useMemo(
@@ -96,14 +135,17 @@ export function useAdaptiveStudyPlan({
         progressMap,
         dailyHours,
         alan,
-        assignmentCounts,
-      }),
+        taskProgress,
 
+        excludedTaskIds:
+          pendingTaskIds,
+      }),
     [
       progressMap,
       dailyHours,
       alan,
-      assignmentCounts,
+      taskProgress,
+      pendingTaskIds,
     ]
   );
 }

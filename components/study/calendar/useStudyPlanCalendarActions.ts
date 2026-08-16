@@ -1,9 +1,5 @@
 "use client";
 
-import {
-  useState,
-} from "react";
-
 import type {
   StudyTask,
 } from "@/types/studyPlan";
@@ -13,116 +9,134 @@ import type {
 } from "@/types/user";
 
 import {
-  addDailyStudyPlanToCalendar,
-  addWeeklyStudyPlanToCalendar,
-  formatCalendarDate,
-} from "@/services/calendar";
+  isAssignmentDateAvailable,
+} from "./dateAvailability";
 
 import {
-  saveStudyPlan,
-} from "@/services/studyPlanService";
+  runStudyPlanCalendarSave,
+} from "./runStudyPlanCalendarSave";
 
 import {
-  getTopicProgress,
-} from "@/services/topicService";
+  useStudyPlanBusyDates,
+} from "./useStudyPlanBusyDates";
 
 import {
-  generateWeeklyStudyPlan,
-} from "@/lib/study/weeklyPlanGenerator";
-
-import type {
-  StudyPlanMode,
-} from "./types";
+  useStudyPlanCalendarState,
+} from "./useStudyPlanCalendarState";
 
 interface Options {
   uid: string;
-  tasks: StudyTask[];
+
+  tasks:
+    StudyTask[];
+
   dailyHours: number;
-  alan: AlanOption | "";
+
+  alan:
+    AlanOption | "";
 }
 
-export function useStudyPlanCalendarActions({
-  uid,
-  tasks,
-  dailyHours,
-  alan,
-}: Options) {
-  const [mode, setMode] =
-    useState<StudyPlanMode>("daily");
+export function useStudyPlanCalendarActions(
+  options: Options
+) {
+  const state =
+    useStudyPlanCalendarState();
 
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const availability =
+    useStudyPlanBusyDates(
+      options.uid
+    );
 
-  function changeMode(newMode: StudyPlanMode) {
-    if (saving) return;
-
-    setMode(newMode);
-    setSaved(false);
-    setError(null);
-  }
+  const dateAvailable =
+    isAssignmentDateAvailable(
+      availability.busyDates,
+      state.selectedDate,
+      state.mode
+    );
 
   async function save() {
-    if (!tasks.length || saving) return;
+    if (
+      state.saving ||
+      !options.tasks.length
+    ) {
+      return;
+    }
 
-    setSaving(true);
-    setSaved(false);
-    setError(null);
-
-    try {
-      const today = new Date();
-
-      await saveStudyPlan(
-        uid,
-        mode,
-        formatCalendarDate(today),
-        tasks.map((task) => task.id)
+    if (
+      !state.selectedDate ||
+      !dateAvailable
+    ) {
+      state.setError(
+        "Seçilen tarihte mevcut ödev bulunuyor."
       );
 
-      if (mode === "daily") {
-        await addDailyStudyPlanToCalendar(
-          uid,
-          tasks,
-          today
-        );
-      } else {
-        const progressMap =
-          await getTopicProgress(uid);
+      return;
+    }
 
-        const week =
-          generateWeeklyStudyPlan({
-            progressMap,
-            dailyHours,
-            alan,
-            days: 7,
-          });
+    try {
+      state.setSaving(true);
+      state.resetStatus();
 
-        await addWeeklyStudyPlanToCalendar(
-          uid,
-          week,
-          today
-        );
-      }
+      await runStudyPlanCalendarSave({
+        ...options,
 
-      setSaved(true);
+        mode:
+          state.mode,
+
+        selectedDate:
+          state.selectedDate,
+      });
+
+      state.setSaved(true);
     } catch (saveError) {
-      console.error(saveError);
+      console.error(
+        saveError
+      );
 
-      setError(
+      state.setError(
         "Plan takvime eklenirken bir hata oluştu."
       );
     } finally {
-      setSaving(false);
+      state.setSaving(false);
     }
   }
 
   return {
-    mode,
-    saving,
-    saved,
-    error,
-    totalDailyMinutes: Math.round(dailyHours * 60),
-    changeMode,
+    mode:
+      state.mode,
+
+    selectedDate:
+      state.selectedDate,
+
+    busyDates:
+      availability.busyDates,
+
+    availabilityLoading:
+      availability.loading,
+
+    dateAvailable,
+
+    saving:
+      state.saving,
+
+    saved:
+      state.saved,
+
+    error:
+      state.error,
+
+    totalDailyMinutes:
+      Math.round(
+        options.dailyHours *
+          60
+      ),
+
+    changeMode:
+      state.changeMode,
+
+    changeDate:
+      state.changeDate,
+
     save,
   };
 }

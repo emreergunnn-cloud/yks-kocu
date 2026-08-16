@@ -163,10 +163,16 @@ export function useCalendarController() {
       if (!uid) return;
 
       await clearAllCalendarEvents(
-        uid
-      );
+  uid
+);
 
-      await load();
+window.dispatchEvent(
+  new Event(
+    "study-calendar-updated"
+  )
+);
+
+await load();
     };
 
   const clearSelectedDay =
@@ -179,11 +185,17 @@ export function useCalendarController() {
       }
 
       await clearCalendarDay(
-        uid,
-        selectedDate
-      );
+  uid,
+  selectedDate
+);
 
-      await load();
+window.dispatchEvent(
+  new Event(
+    "study-calendar-updated"
+  )
+);
+
+await load();
     };
 
   const deleteEvent =
@@ -201,11 +213,17 @@ export function useCalendarController() {
       }
 
       await deleteCalendarEvent(
-        uid,
-        eventId
-      );
+  uid,
+  eventId
+);
 
-      await load();
+window.dispatchEvent(
+  new Event(
+    "study-calendar-updated"
+  )
+);
+
+await load();
     };
 
   const createEvent =

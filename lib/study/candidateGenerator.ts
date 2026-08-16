@@ -2,27 +2,33 @@ import {
   YKS_SUBJECTS,
 } from "@/lib/constants/subjects";
 
-import {
-  computeSubjectStats,
-  type SubjectProgressMap,
+import type {
+  SubjectProgressMap,
 } from "@/services/topicService";
+
+import type {
+  StudyTask,
+} from "@/types/studyPlan";
+
+import type {
+  StudyTaskProgressMap,
+} from "@/types/studyTaskProgress";
 
 import type {
   AlanOption,
 } from "@/types/user";
-
-import type {
-  StudyAssignmentCounts,
-  StudyTask,
-} from "@/types/studyPlan";
 
 import {
   isSubjectAllowedForTrack,
 } from "./trackRules";
 
 import {
-  buildStudyCandidate,
-} from "./candidates/buildStudyCandidate";
+  buildSubjectCandidates,
+} from "./candidates/buildSubjectCandidates";
+
+import {
+  sortStudyCandidates,
+} from "./candidates/sortStudyCandidates";
 
 export function getStudyPlanCandidates(
   progressMap:
@@ -31,10 +37,17 @@ export function getStudyPlanCandidates(
   alan:
     AlanOption | "" = "",
 
-  assignmentCounts:
-    StudyAssignmentCounts = {}
+  taskProgress:
+    StudyTaskProgressMap = {},
+
+  excludedTaskIds:
+    ReadonlySet<string> =
+      new Set<string>()
 ): StudyTask[] {
-  const candidates:
+  const carryovers:
+    StudyTask[] = [];
+
+  const regular:
     StudyTask[] = [];
 
   for (
@@ -50,67 +63,34 @@ export function getStudyPlanCandidates(
       continue;
     }
 
-    const stats =
-      computeSubjectStats(
-        subject.id,
+    const groups =
+      buildSubjectCandidates({
+        subject,
+        progressMap,
+        alan,
+        taskProgress,
+        excludedTaskIds,
+      });
 
-        subject.topics.map(
-          (topic) =>
-            topic.id
-        ),
+    carryovers.push(
+      ...groups.carryovers
+    );
 
-        progressMap
-      );
-
-    subject.topics.forEach(
-      (topic, topicIndex) => {
-        const candidate =
-          buildStudyCandidate({
-            subjectId:
-              subject.id,
-
-            subjectName:
-              subject.name,
-
-            category:
-              subject.category,
-
-            topicId:
-              topic.id,
-
-            topicName:
-              topic.name,
-
-            topicIndex,
-
-            subjectProgressPct:
-              stats.progressPct,
-
-            progressMap,
-            alan,
-            assignmentCounts,
-          });
-
-        if (candidate) {
-          candidates.push(
-            candidate
-          );
-        }
-      }
+    regular.push(
+      ...groups.regular
     );
   }
 
-  return candidates.sort(
-    (a, b) =>
-      b.priority -
-        a.priority ||
-      a.subject.localeCompare(
-        b.subject,
-        "tr"
-      ) ||
-      a.topic.localeCompare(
-        b.topic,
-        "tr"
-      )
+  carryovers.sort(
+    sortStudyCandidates
   );
+
+  regular.sort(
+    sortStudyCandidates
+  );
+
+  return [
+    ...carryovers,
+    ...regular,
+  ];
 }

@@ -18,7 +18,10 @@ import {
 } from "./CalendarEventRow";
 
 interface Props {
-  events: CalendarEvent[];
+  uid: string | null;
+
+  events:
+    CalendarEvent[];
 
   recommendations:
     Record<
@@ -36,6 +39,7 @@ interface Props {
 }
 
 export function CalendarEventList({
+  uid,
   events,
   recommendations,
   onAdd,
@@ -50,6 +54,7 @@ export function CalendarEventList({
           (event) => (
             <CalendarEventRow
               key={event.id}
+              uid={uid}
               event={event}
               recommendation={
                 recommendations[
@@ -67,9 +72,9 @@ export function CalendarEventList({
       <button
         type="button"
         onClick={onAdd}
-        className="w-full py-2 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center gap-1 text-xs text-slate-500 hover:border-blue-400 hover:text-blue-500"
+        className="flex w-full items-center justify-center gap-1 rounded-xl border border-dashed border-slate-200 py-2 text-xs text-slate-500 hover:border-blue-400 hover:text-blue-500 dark:border-slate-700"
       >
-        <Plus className="w-3.5 h-3.5" />
+        <Plus className="h-3.5 w-3.5" />
         Etkinlik Ekle
       </button>
     </div>
@@ -78,8 +83,8 @@ export function CalendarEventList({
 
 function EmptyState() {
   return (
-    <div className="text-center py-6">
-      <CalendarDays className="w-8 h-8 mx-auto mb-2 text-slate-300 dark:text-slate-600" />
+    <div className="py-6 text-center">
+      <CalendarDays className="mx-auto mb-2 h-8 w-8 text-slate-300 dark:text-slate-600" />
 
       <p className="text-sm text-slate-400">
         Bu gün için etkinlik yok

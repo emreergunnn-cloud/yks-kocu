@@ -20,11 +20,22 @@ import {
 } from "@/components/study/recommendations/StudyTaskResources";
 
 import {
+  MebRemediationDetails,
+} from "@/components/study/remediation/MebRemediationDetails";
+
+import {
+  CalendarHomeworkResultEntry,
+} from "./homework/CalendarHomeworkResultEntry";
+
+import {
   TYPE_CONFIG,
 } from "./calendarConfig";
 
 interface Props {
-  event: CalendarEvent;
+  uid: string | null;
+
+  event:
+    CalendarEvent;
 
   recommendation?:
     TaskRecommendation;
@@ -36,6 +47,7 @@ interface Props {
 }
 
 export function CalendarEventRow({
+  uid,
   event,
   recommendation,
   onDelete,
@@ -58,14 +70,14 @@ export function CalendarEventRow({
   return (
     <div>
       <div
-        className={`p-3 rounded-xl border ${config.border} ${config.bg}`}
+        className={`rounded-xl border p-3 ${config.border} ${config.bg}`}
       >
         <div className="flex items-start gap-2">
           <Icon
-            className={`w-4 h-4 mt-0.5 shrink-0 ${config.textColor}`}
+            className={`mt-0.5 h-4 w-4 shrink-0 ${config.textColor}`}
           />
 
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <p
               className={`text-sm font-medium ${config.textColor}`}
             >
@@ -73,19 +85,37 @@ export function CalendarEventRow({
             </p>
 
             {event.durationMinutes ? (
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {
-                  event.durationMinutes
-                }{" "}
-                dakika
+              <p className="mt-0.5 text-[11px] text-slate-400">
+                {event.durationMinutes}
+                {" dakika"}
               </p>
             ) : null}
 
             {event.notes ? (
-              <p className="text-[11px] text-slate-400 mt-0.5">
+              <p className="mt-0.5 text-[11px] text-slate-400">
                 {event.notes}
               </p>
             ) : null}
+
+            {!!event
+              .carryoverQuestions && (
+              <p className="mt-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                Önceki ödevden
+                {" +"}
+                {
+                  event
+                    .carryoverQuestions
+                }
+                {" soru dahil"}
+              </p>
+            )}
+
+            {uid && (
+              <CalendarHomeworkResultEntry
+                uid={uid}
+                event={event}
+              />
+            )}
           </div>
 
           {canDelete && (
@@ -99,11 +129,27 @@ export function CalendarEventRow({
               className="text-slate-400 hover:text-rose-500"
               title="Etkinliği sil"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
       </div>
+
+      {event.remediation &&
+        event.subjectId &&
+        event.topicId && (
+          <MebRemediationDetails
+            subjectId={
+              event.subjectId
+            }
+            topicId={
+              event.topicId
+            }
+            remediation={
+              event.remediation
+            }
+          />
+        )}
 
       {recommendation && (
         <StudyTaskResources

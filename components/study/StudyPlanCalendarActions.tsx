@@ -21,54 +21,110 @@ import {
 } from "./calendar/StudyPlanCalendarStatus";
 
 import {
+  StudyPlanCalendarDatePicker,
+} from "./calendar/StudyPlanCalendarDatePicker";
+
+import {
   useStudyPlanCalendarActions,
 } from "./calendar/useStudyPlanCalendarActions";
 
 interface Props {
   uid: string;
-  tasks: StudyTask[];
+
+  tasks:
+    StudyTask[];
+
   dailyHours: number;
-  alan: AlanOption | "";
+
+  alan:
+    AlanOption | "";
 }
 
-export function StudyPlanCalendarActions(props: Props) {
+export function StudyPlanCalendarActions(
+  props: Props
+) {
   const calendar =
-    useStudyPlanCalendarActions(props);
+    useStudyPlanCalendarActions(
+      props
+    );
 
   return (
-    <div className="bg-white dark:bg-slate-900 border rounded-2xl p-4">
-      <div className="flex flex-col md:flex-row md:items-center gap-3">
-        <div className="flex-1">
+    <div className="rounded-2xl border bg-white p-4 dark:bg-slate-900">
+      <div className="space-y-4">
+        <div>
           <h3 className="text-sm font-semibold">
-            Planı programa dönüştür
+            Planı programa
+            dönüştür
           </h3>
 
           <p className="mt-1 text-xs text-slate-500">
-            Günlük veya haftalık çalışma programını takvimine aktar.
+            Ödevlerini uygun
+            bir tarihe takvimine
+            aktar.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <StudyPlanCalendarModeButtons
-            mode={calendar.mode}
-            disabled={calendar.saving}
-            onChange={calendar.changeMode}
-          />
+        <StudyPlanCalendarModeButtons
+          mode={calendar.mode}
+          disabled={
+            calendar.saving
+          }
+          onChange={
+            calendar.changeMode
+          }
+        />
 
-          <StudyPlanCalendarSaveButton
-            saving={calendar.saving}
-            saved={calendar.saved}
-            disabled={calendar.saving || !props.tasks.length}
-            onClick={() => void calendar.save()}
-          />
-        </div>
+        <StudyPlanCalendarDatePicker
+          mode={calendar.mode}
+          value={
+            calendar.selectedDate
+          }
+          busyDates={
+            calendar.busyDates
+          }
+          loading={
+            calendar
+              .availabilityLoading
+          }
+          disabled={
+            calendar.saving
+          }
+          onChange={
+            calendar.changeDate
+          }
+        />
+
+        <StudyPlanCalendarSaveButton
+          saving={
+            calendar.saving
+          }
+          saved={
+            calendar.saved
+          }
+          disabled={
+            calendar.saving ||
+            calendar
+              .availabilityLoading ||
+            !calendar
+              .dateAvailable ||
+            !props.tasks.length
+          }
+          onClick={() =>
+            void calendar.save()
+          }
+        />
+
+        <StudyPlanCalendarStatus
+          mode={calendar.mode}
+          minutes={
+            calendar
+              .totalDailyMinutes
+          }
+          error={
+            calendar.error
+          }
+        />
       </div>
-
-      <StudyPlanCalendarStatus
-        mode={calendar.mode}
-        minutes={calendar.totalDailyMinutes}
-        error={calendar.error}
-      />
     </div>
   );
 }

@@ -1,65 +1,22 @@
 import type {
-  SubjectProgressMap,
-} from "@/services/topicService";
-
-import type {
-  AlanOption,
-} from "@/types/user";
-
-import type {
-  StudyAssignmentCounts,
-  StudyCategory,
   StudyTask,
 } from "@/types/studyPlan";
 
 import {
-  getTopicDuration,
-} from "../topicDifficulty";
+  evaluateRemediation,
+} from "../remediation/performanceEvaluator";
 
 import {
-  getQuestionCount,
-} from "../questionCalculator";
+  getCandidatePriority,
+} from "./candidatePriority";
 
 import {
-  getNewTopicPriority,
-  resolveTaskType,
-} from "../studyRules";
+  getCandidateLoad,
+} from "./candidateLoad";
 
-import {
-  buildExamImpact,
-} from "../priority/examImpactCalculator";
-
-import {
-  getExamPriorityBoost,
-} from "../priority/examPriorityBoost";
-
-import {
-  resolveReinforcementLoad,
-} from "../reinforcement/reinforcementLoad";
-
-interface Options {
-  subjectId: string;
-  subjectName: string;
-
-  category:
-    StudyCategory;
-
-  topicId: string;
-  topicName: string;
-
-  topicIndex: number;
-
-  subjectProgressPct: number;
-
-  progressMap:
-    SubjectProgressMap;
-
-  alan:
-    AlanOption | "";
-
-  assignmentCounts:
-    StudyAssignmentCounts;
-}
+import type {
+  CandidateBuildOptions,
+} from "./types";
 
 export function buildStudyCandidate({
   subjectId,
@@ -71,87 +28,75 @@ export function buildStudyCandidate({
   subjectProgressPct,
   progressMap,
   alan,
-  assignmentCounts,
-}: Options): StudyTask | null {
+  taskProgress,
+}: CandidateBuildOptions):
+  StudyTask | null {
   const status =
     progressMap[
       subjectId
     ]?.[topicId];
 
-  const resolved =
-    resolveTaskType(status);
+  const priorityResult =
+    getCandidatePriority({
+      status,
+      topicIndex,
+      subjectProgressPct,
+      subjectId,
+      topicId,
+      alan,
+    });
 
-  if (!resolved) {
+  if (!priorityResult) {
     return null;
   }
 
   const taskId =
     `${subjectId}-${topicId}`;
 
-  const previousAssignments =
-    assignmentCounts[
+  const history =
+    taskProgress[
       taskId
-    ] ?? 0;
+    ];
 
-  const initialPriority =
-    resolved.type === "new"
-      ? getNewTopicPriority(
-          topicIndex,
-          subjectProgressPct
-        )
-      : resolved.priority;
-
-  const examImpact =
-    buildExamImpact({
-      subjectId,
-      topicId,
-      alan,
-      taskType:
-        resolved.type,
-    });
-
-  const priorityWithImpact =
-    initialPriority +
-    getExamPriorityBoost(
-      examImpact,
-      resolved.type
-    );
-
-  const baseDuration =
-    getTopicDuration(
-      topicName
-    );
-
-  const baseQuestions =
-    getQuestionCount(
-      baseDuration,
-      resolved.type
-    );
+  const previousAssignments =
+    history?.attemptCount ??
+    0;
 
   const load =
-    resolveReinforcementLoad({
-      baseDuration,
-      baseQuestions,
+    getCandidateLoad({
+      topicName,
 
-      basePriority:
-        priorityWithImpact,
+      taskType:
+        priorityResult.type,
+
+      priority:
+        priorityResult.priority,
 
       previousAssignments,
 
-      taskType:
-        resolved.type,
+      carryoverQuestions:
+        0,
 
-      examImpact,
+      examImpact:
+        priorityResult.examImpact,
     });
 
   return {
     id: taskId,
 
+    progressTaskId:
+      taskId,
+
+    assignmentKind:
+      "regular",
+
     subjectId,
+
     subject:
       subjectName,
 
     topicId,
+
     topic:
       topicName,
 
@@ -164,16 +109,25 @@ export function buildStudyCandidate({
       load.questionCount,
 
     type:
-      resolved.type,
+      priorityResult.type,
 
     priority:
       load.priority,
 
-    examImpact,
+    examImpact:
+      priorityResult.examImpact,
 
     role:
       load.role,
 
     previousAssignments,
+
+    carryoverQuestions:
+      0,
+
+    remediation:
+      evaluateRemediation(
+        history
+      ),
   };
 }

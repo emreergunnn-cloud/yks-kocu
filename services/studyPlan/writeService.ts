@@ -1,8 +1,8 @@
 import {
+  addDoc,
   collection,
   deleteDoc,
   doc,
-  runTransaction,
   Timestamp,
 } from "firebase/firestore";
 
@@ -10,23 +10,17 @@ import {
   db,
 } from "@/lib/firebase";
 
-import {
-  incrementAssignmentHistory,
-} from "./assignmentHistoryService";
-
 export async function saveStudyPlan(
   uid: string,
   mode: "daily" | "weekly",
   date: string,
   taskIds: string[]
 ) {
-  const planRef = doc(
-    collection(
-      db,
-      "users",
-      uid,
-      "studyPlans"
-    )
+  const ref = collection(
+    db,
+    "users",
+    uid,
+    "studyPlans"
   );
 
   const data = {
@@ -34,28 +28,19 @@ export async function saveStudyPlan(
     mode,
     date,
     taskIds,
+
     createdAt:
       Timestamp.now(),
   };
 
-  await runTransaction(
-    db,
-    async (transaction) => {
-      await incrementAssignmentHistory(
-        transaction,
-        uid,
-        taskIds
-      );
-
-      transaction.set(
-        planRef,
-        data
-      );
-    }
-  );
+  const result =
+    await addDoc(
+      ref,
+      data
+    );
 
   return {
-    id: planRef.id,
+    id: result.id,
     ...data,
   };
 }

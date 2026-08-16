@@ -7,7 +7,9 @@ import {
   Timestamp,
 } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import {
+  db,
+} from "@/lib/firebase";
 
 import type {
   CalendarEvent,
@@ -30,11 +32,32 @@ export async function getCalendarEvents(
   return snapshot.docs.map(
     (item) => ({
       id: item.id,
+
       ...(item.data() as Omit<
         CalendarEvent,
         "id"
       >),
     })
+  );
+}
+
+export async function getStudyPlanBusyDates(
+  uid: string
+): Promise<Set<string>> {
+  const events =
+    await getCalendarEvents(uid);
+
+  return new Set(
+    events
+      .filter(
+        (event) =>
+          event.source ===
+          "studyPlan"
+      )
+      .map(
+        (event) =>
+          event.date
+      )
   );
 }
 
@@ -66,7 +89,8 @@ export async function createCalendarEvent(
       event.notes ?? "",
 
     durationMinutes:
-      event.durationMinutes ?? 0,
+      event.durationMinutes ??
+      0,
 
     source: "manual",
 

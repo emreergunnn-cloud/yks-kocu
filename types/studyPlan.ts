@@ -14,6 +14,14 @@ import type {
   StudyTaskExamImpact,
 } from "@/types/examImpact";
 
+import type {
+  StudyTaskProgressMap,
+} from "@/types/studyTaskProgress";
+
+import type {
+  StudyRemediation,
+} from "@/types/remediation";
+
 export type StudyTaskType =
   | "new"
   | "revision"
@@ -24,6 +32,10 @@ export type StudyTaskRole =
   | "reinforcement"
   | "maintenance";
 
+export type StudyTaskKind =
+  | "regular"
+  | "carryover";
+
 export type StudyCategory =
   (typeof YKS_SUBJECTS)[number]["category"];
 
@@ -33,26 +45,40 @@ export type StudyAssignmentCounts =
 export interface StudyTask {
   id: string;
 
+  progressTaskId?: string;
+
+  assignmentKind?:
+    StudyTaskKind;
+
   subjectId: string;
   subject: string;
 
   topicId: string;
   topic: string;
 
-  category: StudyCategory;
+  category:
+    StudyCategory;
 
   durationMinutes: number;
   questionCount: number;
 
-  type: StudyTaskType;
+  type:
+    StudyTaskType;
+
   priority: number;
 
   examImpact?:
     StudyTaskExamImpact;
 
-  role?: StudyTaskRole;
+  role?:
+    StudyTaskRole;
 
   previousAssignments?: number;
+
+  carryoverQuestions?: number;
+
+  remediation?:
+    StudyRemediation;
 }
 
 export interface GeneratePlanOptions {
@@ -61,16 +87,21 @@ export interface GeneratePlanOptions {
 
   dailyHours: number;
 
-  alan?: AlanOption | "";
+  alan?:
+    AlanOption | "";
 
-  assignmentCounts?:
-    StudyAssignmentCounts;
+  taskProgress?:
+    StudyTaskProgressMap;
+
+  excludedTaskIds?:
+    ReadonlySet<string>;
 }
 
 export interface WeeklyStudyPlanDay {
   dayIndex: number;
 
-  tasks: StudyTask[];
+  tasks:
+    StudyTask[];
 
   totalMinutes: number;
 }

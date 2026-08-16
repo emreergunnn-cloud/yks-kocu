@@ -30,12 +30,22 @@ import {
 
 interface Props {
   dailyHours: number;
-  setDailyHours: (value: number) => void;
-  studyPlan: StudyTask[];
+
+  setDailyHours:
+    (value: number) => void;
+
+  studyPlan:
+    StudyTask[];
+
   totalMinutes: number;
+
   totalQuestions: number;
-  uid: string | null;
-  alan: AlanOption | "";
+
+  uid:
+    string | null;
+
+  alan:
+    AlanOption | "";
 }
 
 export function StudyPlannerToday({
@@ -51,13 +61,21 @@ export function StudyPlannerToday({
     <div className="space-y-4">
       <StudyDurationSelector
         hours={dailyHours}
-        onChange={setDailyHours}
+        onChange={
+          setDailyHours
+        }
       />
 
       <StudyPlanSummary
-        minutes={totalMinutes}
-        topics={studyPlan.length}
-        questions={totalQuestions}
+        minutes={
+          totalMinutes
+        }
+        topics={
+          studyPlan.length
+        }
+        questions={
+          totalQuestions
+        }
       />
 
       {studyPlan.length === 0 ? (
@@ -66,14 +84,20 @@ export function StudyPlannerToday({
         <>
           <StudyPlanTaskListWithResources
             uid={uid}
-            tasks={studyPlan}
+            tasks={
+              studyPlan
+            }
           />
 
           {uid && (
             <StudyPlanCalendarActions
               uid={uid}
-              tasks={studyPlan}
-              dailyHours={dailyHours}
+              tasks={
+                studyPlan
+              }
+              dailyHours={
+                dailyHours
+              }
               alan={alan}
             />
           )}

@@ -18,6 +18,7 @@ import {
 
 interface Props {
   uid: string | null;
+
   tasks: StudyTask[];
 }
 

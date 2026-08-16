@@ -1,17 +1,19 @@
-import {
-  getStudyPlanCandidates,
-} from "./candidateGenerator";
-
 import type {
   GeneratePlanOptions,
   StudyTask,
 } from "@/types/studyPlan";
 
+import {
+  getStudyPlanCandidates,
+} from "./candidateGenerator";
+
 export function generateStudyPlan({
   progressMap,
   dailyHours,
   alan = "",
-  assignmentCounts = {},
+  taskProgress = {},
+  excludedTaskIds =
+    new Set<string>(),
 }: GeneratePlanOptions):
   StudyTask[] {
   const availableMinutes =
@@ -32,7 +34,8 @@ export function generateStudyPlan({
     getStudyPlanCandidates(
       progressMap,
       alan,
-      assignmentCounts
+      taskProgress,
+      excludedTaskIds
     );
 
   const selected:
@@ -52,7 +55,9 @@ export function generateStudyPlan({
       continue;
     }
 
-    selected.push(task);
+    selected.push(
+      task
+    );
 
     remaining -=
       task.durationMinutes;
@@ -63,23 +68,14 @@ export function generateStudyPlan({
       break;
     }
 
-    if (remaining < 15) {
+    if (
+      remaining < 15
+    ) {
       break;
     }
   }
 
   return selected;
-}
-
-export function getStudyPlanCandidatesForDebug(
-  ...args:
-    Parameters<
-      typeof getStudyPlanCandidates
-    >
-) {
-  return getStudyPlanCandidates(
-    ...args
-  );
 }
 
 export {

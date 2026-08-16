@@ -137,19 +137,16 @@ export function CalendarDayPanel({
           />
         ) : (
           <CalendarEventList
-            events={events}
-            recommendations={
-              recommendations
-            }
-            onAdd={() =>
-              setShowForm(
-                true
-              )
-            }
-            onDelete={
-              onDelete
-            }
-          />
+  uid={uid}
+  events={events}
+  recommendations={
+    recommendations
+  }
+  onAdd={() =>
+    setShowForm(true)
+  }
+  onDelete={onDelete}
+/>
         )}
       </div>
     </div>

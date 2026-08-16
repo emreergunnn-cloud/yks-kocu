@@ -82,6 +82,18 @@ service cloud.firestore {
           || isAdmin();
       }
 
+      match /studyTaskProgress/{progressId} {
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
+      }
+
+      match /studyTaskAttempts/{attemptId} {
+        allow read, write:
+          if isOwner(uid)
+          || isAdmin();
+      }
+
       match /notifications/{notificationId} {
         allow read, write:
           if isOwner(uid)
