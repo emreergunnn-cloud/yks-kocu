@@ -9,13 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.widget.RemoteViews;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-
 public class YksCountdownWidget extends AppWidgetProvider {
-
     public static void updateAll(Context context) {
         AppWidgetManager manager =
             AppWidgetManager.getInstance(context);
@@ -26,15 +20,8 @@ public class YksCountdownWidget extends AppWidgetProvider {
                 YksCountdownWidget.class
             );
 
-        int[] ids =
-            manager.getAppWidgetIds(component);
-
-        for (int id : ids) {
-            updateWidget(
-                context,
-                manager,
-                id
-            );
+        for (int id : manager.getAppWidgetIds(component)) {
+            updateWidget(context, manager, id);
         }
     }
 
@@ -45,11 +32,7 @@ public class YksCountdownWidget extends AppWidgetProvider {
         int[] widgetIds
     ) {
         for (int id : widgetIds) {
-            updateWidget(
-                context,
-                manager,
-                id
-            );
+            updateWidget(context, manager, id);
         }
     }
 
@@ -58,13 +41,9 @@ public class YksCountdownWidget extends AppWidgetProvider {
         Context context,
         Intent intent
     ) {
-        super.onReceive(
-            context,
-            intent
-        );
+        super.onReceive(context, intent);
 
-        String action =
-            intent.getAction();
+        String action = intent.getAction();
 
         if (
             Intent.ACTION_DATE_CHANGED.equals(action) ||
@@ -87,22 +66,13 @@ public class YksCountdownWidget extends AppWidgetProvider {
             );
 
         String year =
-            prefs.getString(
-                "yksExamYear",
-                ""
-            );
+            prefs.getString("yksExamYear", "");
 
         String isoDate =
-            prefs.getString(
-                "yksEffectiveDate",
-                ""
-            );
+            prefs.getString("yksEffectiveDate", "");
 
         String source =
-            prefs.getString(
-                "yksDateSource",
-                "none"
-            );
+            prefs.getString("yksDateSource", "none");
 
         RemoteViews views =
             new RemoteViews(
@@ -118,56 +88,28 @@ public class YksCountdownWidget extends AppWidgetProvider {
         );
 
         Long days =
-            calculateDays(
-                isoDate
-            );
+            YksWidgetDate.daysUntil(isoDate);
 
-        if (days == null) {
-            views.setTextViewText(
-                R.id.widget_days,
-                "Tarih seçilmedi"
-            );
+        applyCountdown(
+            views,
+            days,
+            source
+        );
 
-            views.setTextViewText(
-                R.id.widget_message,
-                "YKS Koçu → Ayarlar bölümünden sınav tarihini seç."
-            );
-        } else if (days < 0) {
-            views.setTextViewText(
-                R.id.widget_days,
-                "Sınav tamamlandı"
-            );
+        YksWidgetQuote.Quote quote =
+            YksWidgetQuote.today(context);
 
-            views.setTextViewText(
-                R.id.widget_message,
-                "Yeni YKS yılını Ayarlar bölümünden seç."
-            );
-        } else if (days == 0) {
-            views.setTextViewText(
-                R.id.widget_days,
-                "BUGÜN"
-            );
+        views.setTextViewText(
+            R.id.widget_quote,
+            "“" + quote.text + "”"
+        );
 
-            views.setTextViewText(
-                R.id.widget_message,
-                "Sakin kal. Emeğine güven."
-            );
-        } else {
-            views.setTextViewText(
-                R.id.widget_days,
-                days + " gün kaldı"
-            );
-
-            String sourceText =
-                "official".equals(source)
-                    ? "Resmî tarih · ÖSYM"
-                    : "Tahmini tarih · Senin seçimin";
-
-            views.setTextViewText(
-                R.id.widget_message,
-                sourceText
-            );
-        }
+        views.setTextViewText(
+            R.id.widget_author,
+            quote.author.isEmpty()
+                ? ""
+                : "— " + quote.author
+        );
 
         Intent openApp =
             new Intent(
@@ -181,7 +123,7 @@ public class YksCountdownWidget extends AppWidgetProvider {
                 1001,
                 openApp,
                 PendingIntent.FLAG_UPDATE_CURRENT |
-                PendingIntent.FLAG_IMMUTABLE
+                    PendingIntent.FLAG_IMMUTABLE
             );
 
         views.setOnClickPendingIntent(
@@ -195,86 +137,63 @@ public class YksCountdownWidget extends AppWidgetProvider {
         );
     }
 
-    private static Long calculateDays(
-        String isoDate
+    private static void applyCountdown(
+        RemoteViews views,
+        Long days,
+        String source
     ) {
-        if (
-            isoDate == null ||
-            isoDate.length() < 10
-        ) {
-            return null;
+        if (days == null) {
+            views.setTextViewText(
+                R.id.widget_days,
+                "Tarih seçilmedi"
+            );
+
+            views.setTextViewText(
+                R.id.widget_message,
+                "Ayarlar bölümünden sınav tarihini seç."
+            );
+
+            return;
         }
 
-        try {
-            String datePart =
-                isoDate.substring(
-                    0,
-                    10
-                );
-
-            SimpleDateFormat format =
-                new SimpleDateFormat(
-                    "yyyy-MM-dd",
-                    Locale.US
-                );
-
-            Date parsed =
-                format.parse(
-                    datePart
-                );
-
-            if (parsed == null) {
-                return null;
-            }
-
-            Calendar today =
-                Calendar.getInstance();
-
-            today.set(
-                Calendar.HOUR_OF_DAY,
-                0
-            );
-            today.set(
-                Calendar.MINUTE,
-                0
-            );
-            today.set(
-                Calendar.SECOND,
-                0
-            );
-            today.set(
-                Calendar.MILLISECOND,
-                0
+        if (days < 0) {
+            views.setTextViewText(
+                R.id.widget_days,
+                "Sınav tamamlandı"
             );
 
-            Calendar target =
-                Calendar.getInstance();
-
-            target.setTime(parsed);
-            target.set(
-                Calendar.HOUR_OF_DAY,
-                0
+            views.setTextViewText(
+                R.id.widget_message,
+                "Yeni YKS yılını Ayarlar bölümünden seç."
             );
 
-            long days = 0;
-
-            if (today.after(target)) {
-                return -1L;
-            }
-
-            while (
-                today.before(target)
-            ) {
-                today.add(
-                    Calendar.DAY_OF_YEAR,
-                    1
-                );
-                days++;
-            }
-
-            return days;
-        } catch (Exception error) {
-            return null;
+            return;
         }
+
+        if (days == 0) {
+            views.setTextViewText(
+                R.id.widget_days,
+                "BUGÜN"
+            );
+
+            views.setTextViewText(
+                R.id.widget_message,
+                "Sakin kal. Emeğine güven."
+            );
+
+            return;
+        }
+
+        views.setTextViewText(
+            R.id.widget_days,
+            days + " gün kaldı"
+        );
+
+        views.setTextViewText(
+            R.id.widget_message,
+            "official".equals(source)
+                ? "Resmî tarih · ÖSYM"
+                : "Tahmini tarih · Senin seçimin"
+        );
     }
 }

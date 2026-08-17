@@ -1,4 +1,4 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+﻿import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.ykskocu.app',
@@ -6,8 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'out',
 
   server: {
-    url: 'http://10.0.2.2:3000',
-    cleartext: true,
+    url: 'https://yks-kocu-beta.vercel.app',
   },
 
   plugins: {

@@ -1,20 +1,9 @@
-import {
-  Capacitor,
-  registerPlugin,
-} from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
+import { Preferences } from "@capacitor/preferences";
+import { MANIFEST_QUOTES } from "@/lib/constants/quotes";
+import type { UserSettings } from "./settingsService";
 
-import {
-  Preferences,
-} from "@capacitor/preferences";
-
-import type {
-  UserSettings,
-} from "./settingsService";
-
-export type YksDateSource =
-  | "official"
-  | "manual"
-  | "none";
+export type YksDateSource = "official" | "manual" | "none";
 
 export interface YksDateResult {
   year: number;
@@ -27,31 +16,17 @@ interface WidgetPlugin {
   refresh(): Promise<void>;
 }
 
-const YksWidget =
-  registerPlugin<WidgetPlugin>(
-    "YksWidget"
-  );
+const YksWidget = registerPlugin<WidgetPlugin>("YksWidget");
+const QUOTE_POOL_VERSION = "tr-365-v2";
 
-export async function fetchOfficialYksDate(
-  year: number
-): Promise<string | null> {
+export async function fetchOfficialYksDate(year: number): Promise<string | null> {
   try {
-    const response =
-      await fetch(
-        `/api/yks-date?year=${year}`,
-        {
-          cache: "no-store",
-        }
-      );
+    const response = await fetch(`/api/yks-date?year=${year}`, { cache: "no-store" });
+    if (!response.ok) return null;
 
-    if (!response.ok) {
-      return null;
-    }
-
-    const data =
-      (await response.json()) as {
-        officialDate?: string | null;
-      };
+    const data = (await response.json()) as {
+      officialDate?: string | null;
+    };
 
     return data.officialDate ?? null;
   } catch {
@@ -62,84 +37,84 @@ export async function fetchOfficialYksDate(
 export async function resolveYksDate(
   settings: UserSettings
 ): Promise<YksDateResult> {
-  let officialDate:
-    string | null = null;
-
-  if (
-    settings
-      .yksUseOfficialDate
-  ) {
-    officialDate =
-      await fetchOfficialYksDate(
-        settings.yksExamYear
-      );
-  }
+  const officialDate = settings.yksUseOfficialDate
+    ? await fetchOfficialYksDate(settings.yksExamYear)
+    : null;
 
   if (officialDate) {
     return {
-      year:
-        settings.yksExamYear,
-      date:
-        officialDate,
+      year: settings.yksExamYear,
+      date: officialDate,
       officialDate,
-      source:
-        "official",
+      source: "official",
     };
   }
 
-  if (
-    settings.yksManualDate
-  ) {
+  if (settings.yksManualDate) {
     return {
-      year:
-        settings.yksExamYear,
-      date:
-        `${settings.yksManualDate}T10:15:00+03:00`,
+      year: settings.yksExamYear,
+      date: `${settings.yksManualDate}T10:15:00+03:00`,
       officialDate: null,
-      source:
-        "manual",
+      source: "manual",
     };
   }
 
   return {
-    year:
-      settings.yksExamYear,
+    year: settings.yksExamYear,
     date: null,
     officialDate: null,
     source: "none",
   };
 }
 
+async function syncQuotePool() {
+  const version = await Preferences.get({
+    key: "yksQuotePoolVersion",
+  });
+
+  if (version.value === QUOTE_POOL_VERSION) return;
+
+  const pool = MANIFEST_QUOTES.map(({ text, author }) => ({
+    text,
+    author,
+  }));
+
+  await Preferences.set({
+    key: "yksQuotePool",
+    value: JSON.stringify(pool),
+  });
+
+  await Preferences.set({
+    key: "yksQuotePoolVersion",
+    value: QUOTE_POOL_VERSION,
+  });
+}
+
 export async function syncNativeYksWidget(
   result: YksDateResult
 ): Promise<void> {
-  if (
-    !Capacitor.isNativePlatform()
-  ) {
-    return;
-  }
+  if (!Capacitor.isNativePlatform()) return;
 
   await Preferences.set({
     key: "yksExamYear",
-    value:
-      String(result.year),
+    value: String(result.year),
   });
 
   await Preferences.set({
     key: "yksEffectiveDate",
-    value:
-      result.date ?? "",
+    value: result.date ?? "",
   });
 
   await Preferences.set({
     key: "yksDateSource",
-    value:
-      result.source,
+    value: result.source,
   });
+
+  await syncQuotePool();
 
   try {
     await YksWidget.refresh();
   } catch {
-    // Widget mevcut değilse uygulamayı etkilemez.
+    // Widget yoksa uygulama calismaya devam eder.
   }
 }

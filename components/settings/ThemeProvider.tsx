@@ -29,15 +29,11 @@ export function ThemeProvider({
     let active = true;
 
     if (!user) {
-      applyTheme(
-        "system"
-      );
-
+      applyTheme("system");
       return;
     }
 
-    const uid =
-      user.uid;
+    const uid = user.uid;
 
     async function load() {
       const settings =
@@ -70,7 +66,7 @@ export function ThemeProvider({
         document
           .documentElement
           .dataset
-          .theme ===
+          .themeMode ===
         "system"
       ) {
         applyTheme(
@@ -92,9 +88,5 @@ export function ThemeProvider({
     };
   }, []);
 
-  return (
-    <>
-      {children}
-    </>
-  );
+  return children;
 }
