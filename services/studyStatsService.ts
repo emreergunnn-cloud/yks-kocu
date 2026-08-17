@@ -1,109 +1,259 @@
-import {
+﻿import {
   collection,
   getDocs,
   query,
-  where,
   Timestamp,
+  where,
 } from "firebase/firestore";
-import { db } from "../lib/firebase";
+
+import {
+  db,
+} from "../lib/firebase";
 
 export interface StudySessionRecord {
   id?: string;
   uid: string;
   subject: string;
-  duration: number; // seconds
+  duration: number;
   note?: string;
-  startTime: any;
-  endTime: any;
+  startTime: unknown;
+  endTime: unknown;
 }
 
 export interface StudyStats {
   todayMinutes: number;
   weekMinutes: number;
   monthMinutes: number;
+
   todaySessions: number;
   weekSessions: number;
   monthSessions: number;
 }
 
-function startOfDay(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d;
+const EMPTY_STATS: StudyStats = {
+  todayMinutes: 0,
+  weekMinutes: 0,
+  monthMinutes: 0,
+
+  todaySessions: 0,
+  weekSessions: 0,
+  monthSessions: 0,
+};
+
+function startOfDay() {
+  const date =
+    new Date();
+
+  date.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+  return date;
 }
 
-function startOfWeek(): Date {
-  const d = new Date();
-  const day = d.getDay(); // 0=Sun
-  d.setDate(d.getDate() - ((day + 6) % 7)); // Monday
-  d.setHours(0, 0, 0, 0);
-  return d;
+function startOfWeek() {
+  const date =
+    new Date();
+
+  const day =
+    date.getDay();
+
+  date.setDate(
+    date.getDate() -
+      ((day + 6) % 7)
+  );
+
+  date.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+  return date;
 }
 
-function startOfMonth(): Date {
-  const d = new Date();
-  d.setDate(1);
-  d.setHours(0, 0, 0, 0);
-  return d;
+function startOfMonth() {
+  const date =
+    new Date();
+
+  date.setDate(1);
+
+  date.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+  return date;
 }
 
-/**
- * Compute study stats from Firestore studySessions sub-collection.
- */
-export async function getStudyStats(uid: string): Promise<StudyStats> {
+function toDate(
+  value: unknown
+): Date {
+  if (
+    value &&
+    typeof value ===
+      "object"
+  ) {
+    const timestamp =
+      value as {
+        toDate?: () => Date;
+        seconds?: number;
+      };
+
+    if (
+      timestamp.toDate
+    ) {
+      return timestamp.toDate();
+    }
+
+    if (
+      typeof timestamp.seconds ===
+      "number"
+    ) {
+      return new Date(
+        timestamp.seconds * 1000
+      );
+    }
+  }
+
+  if (
+    value instanceof Date
+  ) {
+    return value;
+  }
+
+  if (
+    typeof value ===
+      "string" ||
+    typeof value ===
+      "number"
+  ) {
+    return new Date(value);
+  }
+
+  return new Date(0);
+}
+
+export async function getStudyStats(
+  uid: string
+): Promise<StudyStats> {
   const stats: StudyStats = {
-    todayMinutes: 0,
-    weekMinutes: 0,
-    monthMinutes: 0,
-    todaySessions: 0,
-    weekSessions: 0,
-    monthSessions: 0,
+    ...EMPTY_STATS,
   };
 
   try {
-    const monthStart = startOfMonth();
+    const dayStart =
+      startOfDay();
+
+    const weekStart =
+      startOfWeek();
+
+    const monthStart =
+      startOfMonth();
+
+    const queryStart =
+      new Date(
+        Math.min(
+          dayStart.getTime(),
+          weekStart.getTime(),
+          monthStart.getTime()
+        )
+      );
+
     const q = query(
-      collection(db, "users", uid, "studySessions"),
-      where("startTime", ">=", Timestamp.fromDate(monthStart))
+      collection(
+        db,
+        "users",
+        uid,
+        "studySessions"
+      ),
+      where(
+        "startTime",
+        ">=",
+        Timestamp.fromDate(
+          queryStart
+        )
+      )
     );
-    const snap = await getDocs(q);
 
-    const dayStart = startOfDay();
-    const weekStart = startOfWeek();
+    const snapshot =
+      await getDocs(q);
 
-    snap.docs.forEach((d) => {
-      const data = d.data() as StudySessionRecord;
-      const secs = data.duration || 0;
-      const mins = secs / 60;
+    snapshot.docs.forEach(
+      (item) => {
+        const data =
+          item.data() as StudySessionRecord;
 
-      let sessionDate: Date;
-      if (data.startTime?.toDate) {
-        sessionDate = data.startTime.toDate();
-      } else if (data.startTime?.seconds) {
-        sessionDate = new Date(data.startTime.seconds * 1000);
-      } else {
-        sessionDate = new Date(data.startTime);
+        const seconds =
+          Number(
+            data.duration
+          ) || 0;
+
+        const minutes =
+          seconds / 60;
+
+        const sessionDate =
+          toDate(
+            data.startTime
+          );
+
+        if (
+          sessionDate >=
+          monthStart
+        ) {
+          stats.monthMinutes +=
+            minutes;
+
+          stats.monthSessions++;
+        }
+
+        if (
+          sessionDate >=
+          weekStart
+        ) {
+          stats.weekMinutes +=
+            minutes;
+
+          stats.weekSessions++;
+        }
+
+        if (
+          sessionDate >=
+          dayStart
+        ) {
+          stats.todayMinutes +=
+            minutes;
+
+          stats.todaySessions++;
+        }
       }
+    );
 
-      stats.monthMinutes += mins;
-      stats.monthSessions++;
+    stats.todayMinutes =
+      Math.round(
+        stats.todayMinutes
+      );
 
-      if (sessionDate >= weekStart) {
-        stats.weekMinutes += mins;
-        stats.weekSessions++;
-      }
-      if (sessionDate >= dayStart) {
-        stats.todayMinutes += mins;
-        stats.todaySessions++;
-      }
-    });
+    stats.weekMinutes =
+      Math.round(
+        stats.weekMinutes
+      );
 
-    // Round minutes
-    stats.todayMinutes = Math.round(stats.todayMinutes);
-    stats.weekMinutes = Math.round(stats.weekMinutes);
-    stats.monthMinutes = Math.round(stats.monthMinutes);
-  } catch {
-    // return zeros on error
+    stats.monthMinutes =
+      Math.round(
+        stats.monthMinutes
+      );
+  } catch (error) {
+    console.error(
+      "Çalışma istatistikleri alınamadı:",
+      error
+    );
   }
 
   return stats;

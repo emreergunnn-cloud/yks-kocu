@@ -1,7 +1,23 @@
-"use client";
+﻿"use client";
 
-import React, { useState, useEffect } from "react";
-import { APP_CONFIG } from "@/lib/constants/config";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useAuth,
+} from "@/context/AuthContext";
+
+import {
+  getUserSettings,
+} from "@/services/settingsService";
+
+import {
+  resolveYksDate,
+  syncNativeYksWidget,
+  type YksDateSource,
+} from "@/services/yksDateService";
 
 interface TimeLeft {
   days: number;
@@ -10,93 +26,218 @@ interface TimeLeft {
   seconds: number;
 }
 
-export const YksCountdown: React.FC = () => {
-  const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(null);
-  const [isPassed, setIsPassed] = useState(false);
+export function YksCountdown() {
+  const { user } =
+    useAuth();
+
+  const [
+    targetDate,
+    setTargetDate,
+  ] =
+    useState<string | null>(
+      null
+    );
+
+  const [year, setYear] =
+    useState<number | null>(
+      null
+    );
+
+  const [
+    source,
+    setSource,
+  ] =
+    useState<YksDateSource>(
+      "none"
+    );
+
+  const [
+    timeLeft,
+    setTimeLeft,
+  ] =
+    useState<TimeLeft | null>(
+      null
+    );
 
   useEffect(() => {
-    const targetDate = new Date(APP_CONFIG.YKS_DATE).getTime();
+    if (!user) return;
 
-    const calculateTimeLeft = () => {
-      const now = new Date().getTime();
-      const difference = targetDate - now;
+    const uid = user.uid;
+    let active = true;
+
+    async function load() {
+      const settings =
+        await getUserSettings(
+          uid
+        );
+
+      const resolved =
+        await resolveYksDate(
+          settings
+        );
+
+      if (!active) return;
+
+      setYear(resolved.year);
+      setTargetDate(
+        resolved.date
+      );
+      setSource(
+        resolved.source
+      );
+
+      await syncNativeYksWidget(
+        resolved
+      );
+    }
+
+    void load();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!targetDate) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const target =
+      new Date(
+        targetDate
+      ).getTime();
+
+    function calculate() {
+      const difference =
+        target -
+        Date.now();
 
       if (difference <= 0) {
-        setIsPassed(true);
-        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setTimeLeft({
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+        });
         return;
       }
 
       setTimeLeft({
-        days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-        seconds: Math.floor((difference % (1000 * 60)) / 1000),
+        days:
+          Math.floor(
+            difference /
+              86400000
+          ),
+        hours:
+          Math.floor(
+            (difference %
+              86400000) /
+              3600000
+          ),
+        minutes:
+          Math.floor(
+            (difference %
+              3600000) /
+              60000
+          ),
+        seconds:
+          Math.floor(
+            (difference %
+              60000) /
+              1000
+          ),
       });
-    };
+    }
 
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
+    calculate();
 
-    return () => clearInterval(timer);
-  }, []);
+    const timer =
+      window.setInterval(
+        calculate,
+        1000
+      );
 
-  if (!timeLeft) {
+    return () =>
+      window.clearInterval(
+        timer
+      );
+  }, [targetDate]);
+
+  if (!year) {
     return (
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-900 text-white rounded-2xl p-6 shadow-xl min-h-[140px] animate-pulse">
-        <div className="bg-white/10 w-full h-full rounded-xl"></div>
+      <div className="min-h-[140px] animate-pulse rounded-2xl bg-slate-200 dark:bg-slate-800" />
+    );
+  }
+
+  if (!targetDate) {
+    return (
+      <div className="rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-900 p-6 text-white shadow-xl">
+        <p className="text-xs font-bold text-blue-200">
+          YKS {year}
+        </p>
+
+        <h3 className="mt-2 text-xl font-black">
+          Sayaç için tarih seç
+        </h3>
+
+        <p className="mt-1 text-sm text-blue-100">
+          ÖSYM henüz tarih açıklamadıysa Ayarlar bölümünden tahmini YKS tarihini girebilirsin.
+        </p>
       </div>
     );
   }
 
+  if (!timeLeft) return null;
+
+  const sourceText =
+    source === "official"
+      ? "Resmî tarih · ÖSYM"
+      : "Tahmini tarih · Senin seçimin";
+
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-900 text-white rounded-2xl p-6 shadow-xl">
-      <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="space-y-1 text-center md:text-left w-full md:w-auto">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold text-blue-200">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            YKS 2026
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-900 p-6 text-white shadow-xl">
+      <div className="relative z-10 flex flex-col items-center justify-between gap-6 md:flex-row">
+        <div className="space-y-1 text-center md:text-left">
+          <div className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-blue-200">
+            YKS {year}
           </div>
-          <h3 className="text-xl font-black tracking-tight text-white">
-            {isPassed ? "YKS Tamamlandı!" : "Hedefine Ulaşmak İçin Kalan Süre"}
+
+          <h3 className="text-xl font-black">
+            Hedefine Ulaşmak İçin Kalan Süre
           </h3>
-          <p className="text-xs text-blue-100/80 max-w-md mx-auto md:mx-0">
-            {isPassed 
-              ? "Sınav maratonunu geride bıraktın. Umarım her şey gönlünce olmuştur."
-              : "Disiplinli her gün, hedefine bir adım daha yaklaştırır. Odaklan ve devam et!"}
+
+          <p className="text-xs text-blue-100/80">
+            {sourceText}
           </p>
         </div>
 
-        {!isPassed && (
-          <div className="flex items-center gap-2 sm:gap-4 shrink-0 w-full md:w-auto justify-center">
-            {/* Days */}
-            <div className="flex flex-col items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 sm:px-4 py-3 min-w-[70px] sm:min-w-[80px]">
-              <span className="text-2xl sm:text-3xl font-black text-white">{timeLeft.days}</span>
-              <span className="text-[10px] sm:text-xs font-bold text-blue-200 uppercase tracking-wider mt-1">Gün</span>
-            </div>
-            {/* Hours */}
-            <div className="flex flex-col items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 sm:px-4 py-3 min-w-[70px] sm:min-w-[80px]">
-              <span className="text-2xl sm:text-3xl font-black text-white">{timeLeft.hours.toString().padStart(2, '0')}</span>
-              <span className="text-[10px] sm:text-xs font-bold text-blue-200 uppercase tracking-wider mt-1">Saat</span>
-            </div>
-            {/* Minutes */}
-            <div className="flex flex-col items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 sm:px-4 py-3 min-w-[70px] sm:min-w-[80px]">
-              <span className="text-2xl sm:text-3xl font-black text-white">{timeLeft.minutes.toString().padStart(2, '0')}</span>
-              <span className="text-[10px] sm:text-xs font-bold text-blue-200 uppercase tracking-wider mt-1">Dakika</span>
-            </div>
-            {/* Seconds */}
-            <div className="flex flex-col items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-3 sm:px-4 py-3 min-w-[70px] sm:min-w-[80px]">
-              <span className="text-2xl sm:text-3xl font-black text-white">{timeLeft.seconds.toString().padStart(2, '0')}</span>
-              <span className="text-[10px] sm:text-xs font-bold text-amber-200 uppercase tracking-wider mt-1">Saniye</span>
-            </div>
-          </div>
-        )}
-      </div>
+        <div className="flex gap-2 sm:gap-3">
+          {[
+            ["Gün", timeLeft.days],
+            ["Saat", timeLeft.hours],
+            ["Dakika", timeLeft.minutes],
+            ["Saniye", timeLeft.seconds],
+          ].map(([label, value]) => (
+            <div
+              key={label}
+              className="min-w-[65px] rounded-xl border border-white/20 bg-white/10 px-3 py-3 text-center"
+            >
+              <div className="text-2xl font-black">
+                {String(value).padStart(
+                  2,
+                  "0"
+                )}
+              </div>
 
-      {/* Decorative Blur Effect */}
-      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-400/20 rounded-full blur-2xl pointer-events-none" />
+              <div className="mt-1 text-[10px] font-bold uppercase text-blue-200">
+                {label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
-};
+}

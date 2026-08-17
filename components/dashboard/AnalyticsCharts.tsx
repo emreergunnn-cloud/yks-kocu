@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { TrendLineChart } from "../analytics/TrendLineChart";
 import { SectionBarChart } from "../analytics/SectionBarChart";
-import { ProgressDonut } from "../analytics/ProgressDonut";
 import { Card } from "../ui/Card";
 import { LoadingSpinner } from "../ui/LoadingSpinner";
 
@@ -10,39 +9,111 @@ interface Props {
   loading: boolean;
   trendData: any[];
   sectionAverages: any[];
-  targetProgressPercentage: number;
-  estimatedTargetNet: number;
-  maxTytNet: number;
-  maxAytNet: number;
+  targetTytNet?: number;
+  targetAytNet?: number;
+  currentTytNet: number;
+  currentAytNet: number;
+}
+
+function progress(current: number, target?: number) {
+  if (!target || target <= 0) {
+    return 0;
+  }
+
+  return Math.min(
+    100,
+    Math.round((current / target) * 100)
+  );
+}
+
+interface TargetRowProps {
+  label: string;
+  current: number;
+  target?: number;
+  max: number;
+  barClassName: string;
+}
+
+function TargetRow({
+  label,
+  current,
+  target,
+  max,
+  barClassName,
+}: TargetRowProps) {
+  const percentage = progress(current, target);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-bold text-slate-900 dark:text-white">
+            {label}
+          </p>
+
+          <p className="text-xs text-slate-500">
+            Mevcut: {current.toFixed(1)} / {max}
+          </p>
+        </div>
+
+        <div className="text-right">
+          <p className="text-xs text-slate-500">
+            Hedef
+          </p>
+
+          <p className="text-lg font-black text-slate-900 dark:text-white">
+            {target && target > 0
+              ? `${target} Net`
+              : "Belirlenmedi"}
+          </p>
+        </div>
+      </div>
+
+      <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+        <div
+          className={`h-full rounded-full transition-all ${barClassName}`}
+          style={{
+            width: `${percentage}%`,
+          }}
+        />
+      </div>
+
+      {target && target > 0 && (
+        <p className="text-right text-[11px] font-medium text-slate-400">
+          %{percentage}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function AnalyticsCharts({
   loading,
   trendData,
   sectionAverages,
-  targetProgressPercentage,
-  estimatedTargetNet,
-  maxTytNet,
-  maxAytNet,
+  targetTytNet,
+  targetAytNet,
+  currentTytNet,
+  currentAytNet,
 }: Props) {
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="space-y-4 lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
             <div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 TYT & AYT Net Gelişim Trendi
               </h3>
 
               <p className="text-xs text-slate-500">
-                Zaman içindeki deneme netlerinizin değişimi
+                TYT ve AYT net gelişiminizi ayrı ayrı takip edin
               </p>
             </div>
 
             <a
               href="/analytics"
-              className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400"
             >
               Detaylı Analiz →
             </a>
@@ -55,50 +126,37 @@ export function AnalyticsCharts({
           )}
         </Card>
 
-        <Card className="space-y-4 flex flex-col justify-between">
-          <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+        <Card className="space-y-5">
+          <div className="border-b border-slate-100 pb-3 dark:border-slate-800">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
               Hedef Sıralama Ulaşımı
             </h3>
 
             <p className="text-xs text-slate-500">
-              Tahmini gerekli toplam net seviyesi
+              TYT ve AYT hedef netlerinize ayrı ilerleme
             </p>
           </div>
 
-          <div className="py-4">
-            <ProgressDonut
-              percentage={targetProgressPercentage}
-              label={`Hedef: ~${estimatedTargetNet} Net`}
-            />
-          </div>
+          <TargetRow
+            label="TYT"
+            current={currentTytNet}
+            target={targetTytNet}
+            max={120}
+            barClassName="bg-blue-600"
+          />
 
-          <div className="p-3 bg-slate-50 dark:bg-slate-950/50 rounded-xl text-xs space-y-1">
-            <div className="flex justify-between font-medium">
-              <span className="text-slate-500">
-                En Yüksek Toplam Net:
-              </span>
-
-              <span className="font-bold text-slate-900 dark:text-white">
-                {maxTytNet + maxAytNet} Net
-              </span>
-            </div>
-
-            <div className="flex justify-between font-medium">
-              <span className="text-slate-500">
-                Tahmini Hedef Net:
-              </span>
-
-              <span className="font-bold text-blue-600">
-                {estimatedTargetNet} Net
-              </span>
-            </div>
-          </div>
+          <TargetRow
+            label="AYT"
+            current={currentAytNet}
+            target={targetAytNet}
+            max={80}
+            barClassName="bg-indigo-600"
+          />
         </Card>
       </div>
 
       <Card className="space-y-4">
-        <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="border-b border-slate-100 pb-3 dark:border-slate-800">
           <h3 className="text-base font-bold text-slate-900 dark:text-white">
             Bölüm Bazlı Net Ortalamaları
           </h3>

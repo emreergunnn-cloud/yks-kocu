@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   StudyTask,
 } from "@/types/studyPlan";
 
@@ -7,14 +7,15 @@ import type {
 } from "@/types/user";
 
 import {
-  addDailyStudyPlanToCalendar,
-  addWeeklyStudyPlanToCalendar,
+  getCalendarEvents,
   parseCalendarDate,
+  saveDailyStudyPlanAssignment,
+  saveWeeklyStudyPlanAssignment,
 } from "@/services/calendar";
 
 import {
-  saveStudyPlan,
-} from "@/services/studyPlanService";
+  getStudyTaskProgress,
+} from "@/services/studyTaskProgressService";
 
 import {
   getTopicProgress,
@@ -30,11 +31,18 @@ import type {
 
 interface Options {
   uid: string;
-  tasks: StudyTask[];
-  dailyHours: number;
-  alan: AlanOption | "";
 
-  mode: StudyPlanMode;
+  tasks:
+    StudyTask[];
+
+  dailyHours: number;
+
+  alan:
+    AlanOption | "";
+
+  mode:
+    StudyPlanMode;
+
   selectedDate: string;
 }
 
@@ -47,27 +55,63 @@ export async function saveStudyPlanToCalendar({
   selectedDate,
 }: Options) {
   const startDate =
-    parseCalendarDate(selectedDate);
-
-  await saveStudyPlan(
-    uid,
-    mode,
-    selectedDate,
-    tasks.map((task) => task.id)
-  );
+    parseCalendarDate(
+      selectedDate
+    );
 
   if (mode === "daily") {
-    await addDailyStudyPlanToCalendar(
+    await saveDailyStudyPlanAssignment(
       uid,
       tasks,
+      selectedDate,
       startDate
     );
 
     return;
   }
 
-  const progressMap =
-    await getTopicProgress(uid);
+  const [
+    progressMap,
+    taskProgress,
+    events,
+  ] = await Promise.all([
+    getTopicProgress(uid),
+
+    getStudyTaskProgress(
+      uid
+    ),
+
+    getCalendarEvents(
+      uid
+    ),
+  ]);
+
+  const excludedTaskIds =
+    new Set<string>();
+
+  for (
+    const event
+    of events
+  ) {
+    if (
+      event.source !==
+        "studyPlan" ||
+      !event.studyTaskId
+    ) {
+      continue;
+    }
+
+    if (
+      event.homeworkStatus ===
+      "completed"
+    ) {
+      continue;
+    }
+
+    excludedTaskIds.add(
+      event.studyTaskId
+    );
+  }
 
   const week =
     generateWeeklyStudyPlan({
@@ -75,11 +119,14 @@ export async function saveStudyPlanToCalendar({
       dailyHours,
       alan,
       days: 7,
+      taskProgress,
+      excludedTaskIds,
     });
 
-  await addWeeklyStudyPlanToCalendar(
+  await saveWeeklyStudyPlanAssignment(
     uid,
     week,
+    selectedDate,
     startDate
   );
 }

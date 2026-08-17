@@ -16,7 +16,7 @@ import type {
 
 import {
   buildNetTrend,
-  getLatestExam,
+  hasRegistrationBaseline,
 } from "./examProfile";
 
 import {
@@ -25,8 +25,8 @@ import {
 } from "./subjectResolver";
 
 import {
-  getSectionRatio,
-} from "./sectionNet";
+  buildPerformanceSnapshot,
+} from "./performanceSnapshot";
 
 import {
   calculateResourceLevel,
@@ -40,13 +40,20 @@ import {
   createVideoRecommendation,
 } from "./videoMatcher";
 
+import {
+  buildRecommendationReason,
+} from "./reasonBuilder";
+
 export function createTaskRecommendation(
   task: StudyTask,
   profile: UserProfile | null,
   exams: ExamResult[]
 ): TaskRecommendation {
-  const exam = resolveExam(task);
-  const subject = resolveSubject(task);
+  const exam =
+    resolveExam(task);
+
+  const subject =
+    resolveSubject(task);
 
   const trend =
     buildNetTrend(
@@ -55,15 +62,9 @@ export function createTaskRecommendation(
       exam
     );
 
-  const latest =
-    getLatestExam(
+  const performance =
+    buildPerformanceSnapshot(
       exams,
-      exam
-    );
-
-  const sectionRatio =
-    getSectionRatio(
-      latest,
       exam,
       subject
     );
@@ -72,7 +73,14 @@ export function createTaskRecommendation(
     calculateResourceLevel({
       trend,
       exam,
-      sectionRatio,
+
+      sectionRatio:
+        performance
+          .recentSectionRatio,
+
+      recentOverallRatio:
+        performance
+          .recentOverallRatio,
     });
 
   return {
@@ -94,23 +102,18 @@ export function createTaskRecommendation(
       ),
 
     reason:
-      createReason(
-        trend.delta,
-        trend.gap
-      ),
+      buildRecommendationReason({
+        trend,
+        exam,
+
+        examCount:
+          performance.examCount,
+
+        hasBaseline:
+          hasRegistrationBaseline(
+            profile,
+            exam
+          ),
+      }),
   };
-}
-
-function createReason(
-  delta: number,
-  gap: number
-) {
-  const progress =
-    delta > 0
-      ? `Başlangıca göre +${delta.toFixed(1)} net gelişim var.`
-      : delta < 0
-        ? `Başlangıca göre ${delta.toFixed(1)} net değişim var.`
-        : "Başlangıç seviyesine yakın ilerliyorsun.";
-
-  return `${progress} Hedefe yaklaşık ${gap.toFixed(1)} net kaldı.`;
 }

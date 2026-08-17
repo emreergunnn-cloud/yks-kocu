@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -140,7 +140,6 @@ export default function DashboardPage() {
           totalExams={summary.totalExams}
           avgTytNet={summary.avgTytNet}
           avgAytNet={summary.avgAytNet}
-          avgToplamNet={summary.avgToplamNet}
           maxTytNet={summary.maxTytNet}
           maxAytNet={summary.maxAytNet}
         />
@@ -151,14 +150,14 @@ export default function DashboardPage() {
           loading={authLoading}
           trendData={summary.trendData}
           sectionAverages={summary.sectionAverages}
-          targetProgressPercentage={
-            summary.targetProgressPercentage
+          targetTytNet={
+            Number(userProfile.targetTYT) || undefined
           }
-          estimatedTargetNet={
-            summary.estimatedTargetNet
+          targetAytNet={
+            Number(userProfile.targetAYT) || undefined
           }
-          maxTytNet={summary.maxTytNet}
-          maxAytNet={summary.maxAytNet}
+          currentTytNet={summary.maxTytNet}
+          currentAytNet={summary.maxAytNet}
         />
 
         <RecentExams
@@ -174,3 +173,4 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
+

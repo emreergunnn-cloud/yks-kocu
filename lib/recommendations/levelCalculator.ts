@@ -5,43 +5,60 @@ import type {
 } from "@/types/recommendation";
 
 interface Options {
-  trend: NetTrend;
-  exam: RecommendationExam;
-  sectionRatio: number | null;
+  trend:
+    NetTrend;
+
+  exam:
+    RecommendationExam;
+
+  sectionRatio:
+    number | null;
+
+  recentOverallRatio:
+    number | null;
 }
 
 export function calculateResourceLevel({
   trend,
   exam,
   sectionRatio,
+  recentOverallRatio,
 }: Options): RecommendationLevel {
   const examMax =
-    exam === "TYT" ? 120 : 80;
+    exam === "TYT"
+      ? 120
+      : 80;
+
+  const currentRatio =
+    clamp(
+      trend.current /
+        examMax
+    );
 
   const overallRatio =
-    trend.current / examMax;
+    recentOverallRatio ??
+    currentRatio;
 
   let score =
-    sectionRatio === null
-      ? overallRatio
-      : sectionRatio * 0.65 +
-        overallRatio * 0.35;
+    calculateBaseScore(
+      sectionRatio,
+      overallRatio,
+      currentRatio
+    );
 
-  const progressRatio =
-    trend.delta / examMax;
+  score +=
+    getProgressAdjustment(
+      trend.delta /
+        examMax
+    );
 
-  const gapRatio =
-    trend.gap / examMax;
+  score +=
+    getTargetAdjustment(
+      trend.gap /
+        examMax
+    );
 
-  if (progressRatio >= 0.1) {
-    score += 0.03;
-  }
-
-  if (gapRatio >= 0.3) {
-    score -= 0.04;
-  }
-
-  if (score < 0.38) {
+  if (score < 0.4) {
     return "beginner";
   }
 
@@ -50,4 +67,66 @@ export function calculateResourceLevel({
   }
 
   return "advanced";
+}
+
+function calculateBaseScore(
+  sectionRatio: number | null,
+  overallRatio: number,
+  currentRatio: number
+) {
+  if (
+    sectionRatio === null
+  ) {
+    return (
+      overallRatio * 0.75 +
+      currentRatio * 0.25
+    );
+  }
+
+  return (
+    sectionRatio * 0.6 +
+    overallRatio * 0.25 +
+    currentRatio * 0.15
+  );
+}
+
+function getProgressAdjustment(
+  ratio: number
+) {
+  if (ratio >= 0.1) {
+    return 0.06;
+  }
+
+  if (ratio >= 0.05) {
+    return 0.03;
+  }
+
+  if (ratio <= -0.05) {
+    return -0.06;
+  }
+
+  return 0;
+}
+
+function getTargetAdjustment(
+  ratio: number
+) {
+  if (ratio >= 0.35) {
+    return -0.04;
+  }
+
+  if (ratio <= 0.1) {
+    return 0.03;
+  }
+
+  return 0;
+}
+
+function clamp(
+  value: number
+) {
+  return Math.max(
+    0,
+    Math.min(1, value)
+  );
 }

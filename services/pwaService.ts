@@ -1,57 +1,121 @@
-import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
-import { db, messaging, VAPID_KEY } from "@/lib/firebase";
-import { getToken } from "firebase/messaging";
+﻿import { Capacitor } from "@capacitor/core";
+import { LocalNotifications } from "@capacitor/local-notifications";
+import { getDailyManifestQuote } from "@/lib/constants/manifestQuotes";
 
-// --- YKS Date Calculation ---
-const YKS_EXAM_DATE = new Date('2027-06-19T00:00:00');
+const QUOTE_ID_START = 810000;
+const ANDROID_DAYS = 365;
+const IOS_DAYS = 60;
 
-function getDaysUntilYKS(): number {
-  const today = new Date();
-  const diffTime = YKS_EXAM_DATE.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays > 0 ? diffDays : 0;
+function notificationDate(daysAhead: number) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  date.setHours(8, 0, 0, 0);
+  return date;
 }
 
-// --- Subscription Management ---
+function daysToSchedule() {
+  return Capacitor.getPlatform() === "ios"
+    ? IOS_DAYS
+    : ANDROID_DAYS;
+}
 
-export async function subscribeToYksQuoteNotifications(uid: string): Promise<void> {
-  if (!messaging) {
-    console.warn("Firebase Messaging is not available.");
+async function requestPermission() {
+  let permission = await LocalNotifications.checkPermissions();
+
+  if (permission.display === "prompt") {
+    permission = await LocalNotifications.requestPermissions();
+  }
+
+  return permission.display === "granted";
+}
+
+async function cancelQuoteNotifications() {
+  const pending = await LocalNotifications.getPending();
+
+  const quoteNotifications = pending.notifications
+    .filter(
+      (item) =>
+        item.id >= QUOTE_ID_START &&
+        item.id < QUOTE_ID_START + 500
+    )
+    .map((item) => ({ id: item.id }));
+
+  if (quoteNotifications.length > 0) {
+    await LocalNotifications.cancel({
+      notifications: quoteNotifications,
+    });
+  }
+}
+
+export async function subscribeToYksQuoteNotifications(
+  _uid: string
+): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
     return;
   }
 
   try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      console.log('Notification permission granted.');
-      const token = await getToken(messaging, { vapidKey: VAPID_KEY });
-      if (token) {
-        const userDocRef = doc(db, 'users', uid);
-        await updateDoc(userDocRef, {
-          fcmTokens: arrayUnion(token)
-        });
-        console.log('FCM Token saved to user profile.');
-      } else {
-        console.log('No registration token available. Request permission to generate one.');
-      }
+    const allowed = await requestPermission();
+
+    if (!allowed) {
+      return;
     }
+
+    await cancelQuoteNotifications();
+
+    const now = new Date();
+    const firstDate = notificationDate(0);
+    const startOffset = firstDate <= now ? 1 : 0;
+    const count = daysToSchedule();
+
+    const notifications = Array.from(
+      { length: count },
+      (_, index) => {
+        const daysAhead = index + startOffset;
+        const date = notificationDate(daysAhead);
+        const quote = getDailyManifestQuote(date);
+
+        return {
+          id: QUOTE_ID_START + index,
+          title: "Günün Sözü ✨",
+          body: `“${quote.text}” — ${quote.author}`,
+          largeBody: `“${quote.text}”\n\n— ${quote.author}`,
+          schedule: {
+            at: date,
+            allowWhileIdle: true,
+          },
+          extra: {
+            type: "daily_quote",
+            path: "/dashboard",
+          },
+        };
+      }
+    );
+
+    await LocalNotifications.schedule({
+      notifications,
+    });
   } catch (error) {
-    console.error('An error occurred while retrieving token. ', error);
+    console.error(
+      "Günlük söz bildirimleri planlanamadı:",
+      error
+    );
   }
 }
 
-export async function unsubscribeFromYksQuoteNotifications(uid: string): Promise<void> {
-  if (!messaging) return;
+export async function unsubscribeFromYksQuoteNotifications(
+  _uid: string
+): Promise<void> {
+  if (!Capacitor.isNativePlatform()) {
+    return;
+  }
+
   try {
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
-    if (token) {
-      const userDocRef = doc(db, 'users', uid);
-      await updateDoc(userDocRef, {
-        fcmTokens: arrayRemove(token)
-      });
-      console.log('FCM Token removed from user profile.');
-    }
+    await cancelQuoteNotifications();
   } catch (error) {
-    console.error('An error occurred while removing token. ', error);
+    console.error(
+      "Günlük söz bildirimleri kaldırılamadı:",
+      error
+    );
   }
 }

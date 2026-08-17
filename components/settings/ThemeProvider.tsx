@@ -1,55 +1,100 @@
-"use client";
+﻿"use client";
 
-import { useEffect } from "react";
-import { useAuth } from "../../context/AuthContext";
-import { getUserSettings } from "../../services/settingsService";
+import {
+  useEffect,
+} from "react";
 
-/**
- * ThemeProvider applies dark/light/system theme class to <html> element.
- * Reads from user settings in Firestore; falls back to system preference.
- */
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+import {
+  useAuth,
+} from "@/context/AuthContext";
+
+import {
+  getUserSettings,
+} from "@/services/settingsService";
+
+import {
+  applyTheme,
+} from "./theme";
+
+export function ThemeProvider({
+  children,
+}: {
+  children:
+    React.ReactNode;
+}) {
+  const { user } =
+    useAuth();
 
   useEffect(() => {
-    const applyTheme = (theme: "light" | "dark" | "system") => {
-      const html = document.documentElement;
-      if (theme === "dark") {
-        html.classList.add("dark");
-      } else if (theme === "light") {
-        html.classList.remove("dark");
-      } else {
-        // system
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        if (prefersDark) html.classList.add("dark");
-        else html.classList.remove("dark");
-      }
-    };
+    let active = true;
 
-    if (user) {
-      getUserSettings(user.uid).then((settings) => {
-        applyTheme(settings.theme);
-      }).catch(() => {
-        applyTheme("system");
-      });
-    } else {
-      applyTheme("system");
+    if (!user) {
+      applyTheme(
+        "system"
+      );
+
+      return;
     }
+
+    const uid =
+      user.uid;
+
+    async function load() {
+      const settings =
+        await getUserSettings(
+          uid
+        );
+
+      if (active) {
+        applyTheme(
+          settings.theme
+        );
+      }
+    }
+
+    void load();
+
+    return () => {
+      active = false;
+    };
   }, [user]);
 
-  // Also listen to system preference changes when theme is 'system'
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => {
-      const html = document.documentElement;
-      if (!html.dataset.theme) {
-        if (e.matches) html.classList.add("dark");
-        else html.classList.remove("dark");
+    const media =
+      window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      );
+
+    function handleChange() {
+      if (
+        document
+          .documentElement
+          .dataset
+          .theme ===
+        "system"
+      ) {
+        applyTheme(
+          "system"
+        );
       }
+    }
+
+    media.addEventListener(
+      "change",
+      handleChange
+    );
+
+    return () => {
+      media.removeEventListener(
+        "change",
+        handleChange
+      );
     };
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
   }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+    </>
+  );
 }

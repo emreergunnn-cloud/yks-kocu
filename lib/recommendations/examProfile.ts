@@ -1,56 +1,107 @@
-import type { ExamResult } from "@/types/exam";
-import type { UserProfile } from "@/types/user";
+import type {
+  ExamResult,
+} from "@/types/exam";
+
+import type {
+  UserProfile,
+} from "@/types/user";
+
 import type {
   NetTrend,
   RecommendationExam,
 } from "@/types/recommendation";
 
-export function getLatestExam(
-  exams: ExamResult[],
-  scope: RecommendationExam
-) {
-  return exams.find((exam) => {
-    if (scope === "TYT") {
-      return (
-        exam.denemeTipi === "TYT" ||
-        exam.denemeTipi === "TYT+AYT"
-      );
-    }
+import {
+  getExamTotalNet,
+  getLatestExam,
+} from "./examTimeline";
 
-    return (
-      exam.denemeTipi === "AYT" ||
-      exam.denemeTipi === "TYT+AYT"
-    );
-  });
-}
+export {
+  getLatestExam,
+} from "./examTimeline";
 
 export function buildNetTrend(
   profile: UserProfile | null,
   exams: ExamResult[],
   scope: RecommendationExam
 ): NetTrend {
-  const latest = getLatestExam(exams, scope);
+  const latest =
+    getLatestExam(
+      exams,
+      scope
+    );
+
+  const latestNet =
+    latest
+      ? getExamTotalNet(
+          latest,
+          scope
+        )
+      : undefined;
+
+  const registrationNet =
+    getRegistrationNet(
+      profile,
+      scope
+    );
 
   const initial =
-    scope === "TYT"
-      ? profile?.currentTYT ?? 0
-      : profile?.currentAYT ?? 0;
+    registrationNet ??
+    latestNet ??
+    0;
 
   const current =
-    scope === "TYT"
-      ? latest?.tytToplamNet ?? initial
-      : latest?.aytToplamNet ?? initial;
+    latestNet ??
+    initial;
 
   const target =
-    scope === "TYT"
-      ? profile?.targetTYT ?? current
-      : profile?.targetAYT ?? current;
+    getTargetNet(
+      profile,
+      scope
+    ) ?? current;
 
   return {
     initial,
     current,
     target,
-    delta: current - initial,
-    gap: Math.max(0, target - current),
+
+    delta:
+      current - initial,
+
+    gap:
+      Math.max(
+        0,
+        target - current
+      ),
   };
+}
+
+export function hasRegistrationBaseline(
+  profile: UserProfile | null,
+  scope: RecommendationExam
+) {
+  return (
+    getRegistrationNet(
+      profile,
+      scope
+    ) !== undefined
+  );
+}
+
+function getRegistrationNet(
+  profile: UserProfile | null,
+  scope: RecommendationExam
+) {
+  return scope === "TYT"
+    ? profile?.currentTYT
+    : profile?.currentAYT;
+}
+
+function getTargetNet(
+  profile: UserProfile | null,
+  scope: RecommendationExam
+) {
+  return scope === "TYT"
+    ? profile?.targetTYT
+    : profile?.targetAYT;
 }
