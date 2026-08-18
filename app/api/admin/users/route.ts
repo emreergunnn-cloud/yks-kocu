@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "../../../../lib/firebaseAdmin";
+import { adminAuth, adminDb } from "../../../../lib/firebaseAdmin";
 import { requireAdmin } from "../../../../lib/adminAuth";
 
 export async function GET(request: NextRequest) {
@@ -16,26 +16,67 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const snapshot = await adminDb
-      .collection("users")
-      .orderBy("createdAt", "desc")
-      .limit(100)
-      .get();
+    const requested =
+      Number(request.nextUrl.searchParams.get("limit")) || 100;
 
-    const users = snapshot.docs.map((doc) => {
-      const data = doc.data();
+    const limit =
+      Math.min(Math.max(requested, 1), 1000);
 
-      return {
-        uid: doc.id,
-        adSoyad: data.adSoyad ?? "-",
-        email: data.email ?? "-",
-        alan: data.alan ?? "-",
-        sinif: data.sinif ?? "-",
-        role: data.role ?? "student",
-        createdAt:
-          data.createdAt?.toDate?.()?.toISOString() ?? null,
-      };
-    });
+    const authPage =
+      await adminAuth.listUsers(limit);
+
+    const refs =
+      authPage.users.map((user) =>
+        adminDb.collection("users").doc(user.uid)
+      );
+
+    const profileDocs =
+      refs.length > 0
+        ? await adminDb.getAll(...refs)
+        : [];
+
+    const profiles =
+      new Map(
+        profileDocs.map((doc) => [
+          doc.id,
+          doc.exists ? doc.data() ?? {} : {},
+        ])
+      );
+
+    const users =
+      authPage.users
+        .map((authUser) => {
+          const profile =
+            profiles.get(authUser.uid) ?? {};
+
+          const profileCreatedAt =
+            profile.createdAt?.toDate?.()?.toISOString?.();
+
+          return {
+            uid: authUser.uid,
+            adSoyad:
+              profile.adSoyad ??
+              authUser.displayName ??
+              "-",
+            email:
+              authUser.email ??
+              profile.email ??
+              "-",
+            alan:
+              profile.alan ?? "-",
+            sinif:
+              profile.sinif ?? "-",
+            role:
+              profile.role ?? "student",
+            createdAt:
+              profileCreatedAt ??
+              authUser.metadata.creationTime ??
+              "",
+          };
+        })
+        .sort((a, b) =>
+          b.createdAt.localeCompare(a.createdAt)
+        );
 
     return NextResponse.json({
       success: true,
@@ -47,7 +88,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: "Users could not be loaded.",
+        error: "Kullanicilar yuklenemedi.",
       },
       { status: 500 }
     );

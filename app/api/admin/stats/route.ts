@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb } from "../../../../lib/firebaseAdmin";
+import { adminAuth, adminDb } from "../../../../lib/firebaseAdmin";
 import { requireAdmin } from "../../../../lib/adminAuth";
+
+async function countAuthUsers() {
+  let total = 0;
+  let pageToken: string | undefined;
+
+  do {
+    const page =
+      await adminAuth.listUsers(
+        1000,
+        pageToken
+      );
+
+    total += page.users.length;
+    pageToken = page.pageToken;
+  } while (pageToken);
+
+  return total;
+}
 
 export async function GET(request: NextRequest) {
   const authResult = await requireAdmin(request);
@@ -16,16 +34,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [usersSnapshot, examsSnapshot] = await Promise.all([
-      adminDb.collection("users").count().get(),
-      adminDb.collection("exam_results").count().get(),
-    ]);
+    const [totalUsers, examsSnapshot] =
+      await Promise.all([
+        countAuthUsers(),
+        adminDb
+          .collection("exam_results")
+          .count()
+          .get(),
+      ]);
 
     return NextResponse.json({
       success: true,
       stats: {
-        totalUsers: usersSnapshot.data().count,
-        totalExams: examsSnapshot.data().count,
+        totalUsers,
+        totalExams:
+          examsSnapshot.data().count,
         totalStudySessions: 0,
       },
     });
@@ -35,7 +58,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: "Stats could not be loaded.",
+        error: "Istatistikler yuklenemedi.",
       },
       { status: 500 }
     );
