@@ -118,6 +118,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({
                 onEmailChange={setEmail}
                 onPasswordChange={setPassword}
                 onTogglePassword={() => setShowPassword((value) => !value)}
+                onForgotPassword={() => switchMode("forgot")}
                 onSubmit={handleSubmit}
               />
               <AuthModeSwitcher mode={mode} onSwitch={switchMode} />

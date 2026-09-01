@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   SettingsAppearance,
@@ -19,6 +19,10 @@ import {
 import {
   SettingsPomodoro,
 } from "./SettingsPomodoro";
+
+import {
+  SettingsSecurity,
+} from "./SettingsSecurity";
 
 import {
   useSettingsForm,
@@ -60,6 +64,8 @@ export function SettingsPage() {
             void form.save()
         }
       />
+
+      <SettingsSecurity />
 
       <SettingsAppearance
         theme={

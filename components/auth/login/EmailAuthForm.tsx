@@ -14,6 +14,7 @@ interface Props {
   onEmailChange: (value: string) => void;
   onPasswordChange: (value: string) => void;
   onTogglePassword: () => void;
+  onForgotPassword: () => void;
   onSubmit: (event: FormEvent) => void;
 }
 
@@ -30,6 +31,7 @@ export function EmailAuthForm(props: Props) {
     onEmailChange,
     onPasswordChange,
     onTogglePassword,
+    onForgotPassword,
     onSubmit,
   } = props;
 
@@ -85,6 +87,18 @@ export function EmailAuthForm(props: Props) {
             ) : (
               <Eye className="w-4 h-4" />
             )}
+          </button>
+        </div>
+      )}
+
+      {mode === "login" && (
+        <div className="-mt-2 text-right">
+          <button
+            type="button"
+            onClick={onForgotPassword}
+            className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Şifremi unuttum
           </button>
         </div>
       )}

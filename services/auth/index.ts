@@ -7,3 +7,9 @@ export {
   sendPasswordReset,
 } from "./emailService";
 export { logout, getIdToken } from "./sessionService";
+
+export {
+  hasGoogleProvider,
+  hasPasswordProvider,
+  linkPasswordToUser,
+} from "./passwordService";

@@ -9,3 +9,9 @@ export {
   sendPasswordReset,
 } from "./auth/emailService";
 export { logout, getIdToken } from "./auth/sessionService";
+
+export {
+  hasGoogleProvider,
+  hasPasswordProvider,
+  linkPasswordToUser,
+} from "./auth/passwordService";

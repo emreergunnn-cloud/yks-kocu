@@ -10,23 +10,15 @@ export function AuthModeSwitcher({ mode, onSwitch }: Props) {
   return (
     <div className="space-y-2 text-center text-xs">
       {mode === "login" && (
-        <>
+        <p className="text-slate-500">
+          Hesabın yok mu?{" "}
           <button
-            onClick={() => onSwitch("forgot")}
-            className="text-blue-600 dark:text-blue-400 hover:underline block w-full"
+            onClick={() => onSwitch("register")}
+            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
           >
-            Şifremi Unuttum
+            Kayıt Ol
           </button>
-          <p className="text-slate-500">
-            Hesabın yok mu?{" "}
-            <button
-              onClick={() => onSwitch("register")}
-              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-            >
-              Kayıt Ol
-            </button>
-          </p>
-        </>
+        </p>
       )}
 
       {mode === "register" && (
