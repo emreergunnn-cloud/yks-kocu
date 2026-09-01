@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:lines": "node scripts/check-source-lines.js"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.4.0",

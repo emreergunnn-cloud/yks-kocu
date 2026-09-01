@@ -1,0 +1,6 @@
+import { Card } from "@/components/ui/Card";
+import { RankingResultCard } from "@/components/calculator/RankingResultCard";
+import type { CalculatorResults } from "./types";
+export function CalculatorResultsPanel({ results }: { results: CalculatorResults | null }) {
+  return <div className="space-y-6 lg:col-span-2"><div className="grid grid-cols-1 gap-6 md:grid-cols-2"><RankingResultCard year={2024} result={results?.[2024]} /><RankingResultCard year={2025} result={results?.[2025]} /></div><div className="w-full"><RankingResultCard year={2026} result={results?.[2026]} /></div><Card><h2 className="mb-4 text-xl font-bold">💡 Bilgilendirme</h2><p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">Bu hesaplama sadece geçmiş yıllara ait veriler baz alınarak oluşturulmuş tahmini bir başarı sıralaması sunar. Sadece toplam TYT ve AYT netlerinizi girerek hesaplama yaptığınızdan test bazlı (Matematik, Fen vb.) katsayı farklılıkları tam olarak hesaba katılamaz. Gerçek YKS sonuçları, sınavın o yılki zorluk seviyesine, adayların genel performansına, standart sapmalara ve ÖSYM'nin değerlendirmelerine göre büyük farklılıklar gösterebilir.<br /><br /><strong>2026 Sonuçları:</strong> Henüz gerçekleşmemiş bir sınava ait olduğu için geçmiş eğilimlere göre hesaplanan ve geniş bir aralık olarak sunulan bir gelecek tahminidir.</p></Card></div>;
+}
