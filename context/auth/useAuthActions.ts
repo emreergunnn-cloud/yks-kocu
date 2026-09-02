@@ -105,8 +105,9 @@ export function useAuthActions({
   };
 
   const sendPasswordReset = async (email: string) => {
-    try {
-      await sendPasswordResetEmail(auth, email);
+  try {
+    auth.languageCode = "tr";
+    await sendPasswordResetEmail(auth, email);
     } catch (error) {
       const authError = error as AuthError;
       logToServer("error", "[AuthContext] Password reset error", {
