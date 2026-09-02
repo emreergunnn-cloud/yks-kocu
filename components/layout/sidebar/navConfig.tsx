@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { BarChart2, BookOpen, Brain, Calculator, CalendarDays, ClipboardList, LayoutDashboard, Settings, Timer, Trophy, User } from "lucide-react";
+import { BarChart2, BookOpen, Brain, Calculator, CalendarDays, ClipboardList, LayoutDashboard, Settings, ShieldCheck, Timer, Trophy, User } from "lucide-react";
 
 export interface NavItem { name: string; href: string; icon: ReactNode; badge?: string; }
 export interface NavGroup { label: string; items: NavItem[]; }
@@ -20,6 +20,7 @@ export const navGroups: NavGroup[] = [
   { label: "Kişisel", items: [
     { name: "Başarılar", href: "/achievements", icon: <Trophy className="h-4 w-4" /> },
     { name: "Profil", href: "/profile", icon: <User className="h-4 w-4" /> },
+    { name: "Hesap ve Güvenlik", href: "/account", icon: <ShieldCheck className="h-4 w-4" /> },
     { name: "Ayarlar", href: "/settings", icon: <Settings className="h-4 w-4" /> },
   ]},
 ];
