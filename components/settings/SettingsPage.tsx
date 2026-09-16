@@ -4,7 +4,6 @@ import { SettingsAppearance } from "./SettingsAppearance";
 import { SettingsGoals } from "./SettingsGoals";
 import { SettingsHeader } from "./SettingsHeader";
 import { SettingsNotifications } from "./SettingsNotifications";
-import { SettingsPomodoro } from "./SettingsPomodoro";
 import { useSettingsForm } from "./useSettingsForm";
 
 export function SettingsPage() {
@@ -37,7 +36,6 @@ export function SettingsPage() {
         onChange={(theme) => form.update({ theme })}
       />
 
-      <SettingsPomodoro settings={form.settings} onChange={form.update} />
       <SettingsGoals settings={form.settings} onChange={form.update} />
       <SettingsNotifications settings={form.settings} onChange={form.update} />
     </div>
