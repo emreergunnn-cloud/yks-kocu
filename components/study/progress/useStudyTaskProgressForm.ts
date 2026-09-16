@@ -109,6 +109,7 @@ export function useStudyTaskProgressForm({
         uid,
 
         taskId:
+          task.progressTaskId ??
           task.id,
 
         subjectId:

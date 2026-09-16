@@ -21,6 +21,10 @@ import {
   buildProgressPayload,
 } from "./payloadBuilders";
 
+import {
+  deriveTopicStatusFromStudyResult,
+} from "@/services/topicProgress/deriveStatusFromStudyResult";
+
 export async function submitStudyTaskResult(
   input: SubmitStudyTaskResult
 ) {
@@ -48,6 +52,14 @@ export async function submitStudyTaskResult(
           "studyTaskAttempts"
         )
       );
+
+  const topicProgressRef = doc(
+    db,
+    "users",
+    input.uid,
+    "topicProgress",
+    "data"
+  );
 
   const eventRef = input.calendarEventId
     ? doc(
@@ -113,6 +125,22 @@ export async function submitStudyTaskResult(
         attemptCount,
         now
       )
+    );
+
+    const topicStatus =
+      deriveTopicStatusFromStudyResult(
+        result,
+        attemptCount
+      );
+
+    transaction.set(
+      topicProgressRef,
+      {
+        [input.subjectId]: {
+          [input.topicId]: topicStatus,
+        },
+      },
+      { merge: true }
     );
 
     if (eventRef) {

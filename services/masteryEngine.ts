@@ -1,19 +1,33 @@
-import { ExamResult } from "../types/exam";
-import { StudySession } from "./studyService";
-import { SubjectProgressMap } from "./topicService";
 import { YKS_SUBJECTS } from "../lib/constants/subjects";
+import type { ExamResult } from "../types/exam";
+import type { StudySession } from "./studyService";
+import type { SubjectProgressMap } from "./topicService";
+import type { StudyTaskProgressMap } from "@/types/studyTaskProgress";
+import { applyTaskProgressScore } from "./mastery/taskProgressScore";
 
-export type MasteryLevel = "Kritik Eksik" | "Geliştirilmeli" | "Orta" | "İyi" | "Güçlü";
-export type MasteryConfidence = "LOW" | "MEDIUM" | "HIGH";
+export type MasteryLevel =
+  | "Kritik Eksik"
+  | "Geliştirilmeli"
+  | "Orta"
+  | "İyi"
+  | "Güçlü";
+
+export type MasteryConfidence =
+  | "LOW"
+  | "MEDIUM"
+  | "HIGH";
 
 export interface MasteryResult {
+  subjectId: string;
   topicId: string;
   score: number;
   level: MasteryLevel;
   confidence: MasteryConfidence;
 }
 
-export function getMasteryLevel(score: number): MasteryLevel {
+export function getMasteryLevel(
+  score: number
+): MasteryLevel {
   if (score <= 24) return "Kritik Eksik";
   if (score <= 44) return "Geliştirilmeli";
   if (score <= 64) return "Orta";
@@ -21,64 +35,93 @@ export function getMasteryLevel(score: number): MasteryLevel {
   return "Güçlü";
 }
 
+function getBaseScore(
+  progressStatus?: string
+): number {
+  if (progressStatus === "Tamamlandı") return 60;
+  if (progressStatus === "Çalışılıyor") return 40;
+  if (progressStatus === "Tekrar Edilecek") return 25;
+  return 0;
+}
+
+
+function findTaskProgress(
+  subjectId: string,
+  topicId: string,
+  taskProgress: StudyTaskProgressMap
+) {
+  return (
+    taskProgress[`${subjectId}-${topicId}`] ??
+    Object.values(taskProgress).find(
+      (item) =>
+        item.subjectId === subjectId &&
+        item.topicId === topicId
+    )
+  );
+}
+
 export function calculateTopicMastery(
+  subjectId: string,
   topicId: string,
   progressStatus: string | undefined,
   exams: ExamResult[],
-  studySessions: StudySession[]
+  studySessions: StudySession[],
+  taskProgress: StudyTaskProgressMap = {}
 ): MasteryResult {
-  let score = 0;
-  let confidencePoints = 0;
+  let score = getBaseScore(progressStatus);
+  let confidencePoints = progressStatus ? 1 : 0;
 
-  // 1. BASE SCORE
-  if (progressStatus === "Tamamlandı") {
-    score += 60;
-    confidencePoints += 1;
-  } else if (progressStatus === "Çalışılıyor") {
-    score += 40;
-    confidencePoints += 1;
-  } else if (progressStatus === "Tekrar Edilecek") {
-    score += 25;
-    confidencePoints += 1;
-  } else {
-    score += 10;
-  }
+  const taskResult = applyTaskProgressScore(
+    score,
+    findTaskProgress(
+      subjectId,
+      topicId,
+      taskProgress
+    )
+  );
+  score = taskResult.score;
+  confidencePoints += taskResult.confidencePoints;
 
-  // 2. WEAK TOPIC ETKİSİ
-  const sortedExams = [...exams].sort((a, b) => {
-    const da = a.createdAt?.seconds || a.createdAt || 0;
-    const db = b.createdAt?.seconds || b.createdAt || 0;
-    return db - da; 
-  });
-  
-  const recentExams = sortedExams.slice(0, 5);
+  const recentExams = [...exams]
+    .sort((a, b) => {
+      const da = a.createdAt?.seconds || a.createdAt || 0;
+      const db = b.createdAt?.seconds || b.createdAt || 0;
+      return db - da;
+    })
+    .slice(0, 5);
+
   let weakCount = 0;
   let lastWeakDate = 0;
-  
-  recentExams.forEach(exam => {
-    const weakTopics = exam.weakTopics || [];
-    if (weakTopics.includes(topicId)) {
-      weakCount++;
-      const time = exam.createdAt?.seconds ? exam.createdAt.seconds * 1000 : 0;
-      if (time > lastWeakDate) lastWeakDate = time;
-    }
+
+  recentExams.forEach((exam) => {
+    if (!(exam.weakTopics || []).includes(topicId)) return;
+
+    weakCount++;
+    const time = exam.createdAt?.seconds
+      ? exam.createdAt.seconds * 1000
+      : 0;
+    if (time > lastWeakDate) lastWeakDate = time;
   });
 
   if (weakCount > 0) {
-    score -= (weakCount * 5);
-    confidencePoints += 2;
-  } else if (recentExams.length > 0) {
-    confidencePoints += 1;
+    score -= weakCount * 5;
+    confidencePoints += 3;
   }
 
-  // 3. STUDY ETKİSİ
-  const topicSessions = studySessions.filter(s => s.topicId === topicId);
+  const topicSessions = studySessions.filter(
+    (session) =>
+      session.subjectId === subjectId &&
+      session.topicId === topicId
+  );
+
   let totalStudySecs = 0;
   let lastStudyDate = 0;
 
-  topicSessions.forEach(s => {
-    totalStudySecs += s.duration || 0;
-    const time = s.endTime?.seconds ? s.endTime.seconds * 1000 : 0;
+  topicSessions.forEach((session) => {
+    totalStudySecs += session.duration || 0;
+    const time = session.endTime?.seconds
+      ? session.endTime.seconds * 1000
+      : 0;
     if (time > lastStudyDate) lastStudyDate = time;
   });
 
@@ -92,9 +135,9 @@ export function calculateTopicMastery(
   if (topicSessions.length > 0) confidencePoints += 1;
   if (topicSessions.length > 2) confidencePoints += 1;
 
-  // 4. RECENCY
   const now = Date.now();
-  const msInDay = 86400000;
+  const msInDay = 86_400_000;
+
   if (lastStudyDate > 0) {
     const daysSinceStudy = (now - lastStudyDate) / msInDay;
     if (daysSinceStudy <= 1) score += 5;
@@ -102,15 +145,11 @@ export function calculateTopicMastery(
     else if (daysSinceStudy <= 7) score += 1;
   }
 
-  // 5. WEAK RECENCY PENALTY
   if (lastWeakDate > 0) {
     const daysSinceWeak = (now - lastWeakDate) / msInDay;
-    if (daysSinceWeak <= 3) {
-      score -= 5;
-    }
+    if (daysSinceWeak <= 3) score -= 5;
   }
 
-  // 6. CLAMP & CONFIDENCE
   score = Math.max(0, Math.min(100, Math.round(score)));
 
   let confidence: MasteryConfidence = "LOW";
@@ -118,24 +157,33 @@ export function calculateTopicMastery(
   else if (confidencePoints >= 1) confidence = "MEDIUM";
 
   return {
+    subjectId,
     topicId,
     score,
     level: getMasteryLevel(score),
-    confidence
+    confidence,
   };
 }
 
 export function getAllMasteries(
   progressMap: SubjectProgressMap,
   exams: ExamResult[],
-  studySessions: StudySession[]
+  studySessions: StudySession[],
+  taskProgress: StudyTaskProgressMap = {}
 ): Record<string, MasteryResult> {
   const result: Record<string, MasteryResult> = {};
-  
-  YKS_SUBJECTS.forEach(sub => {
-    sub.topics.forEach(topic => {
-      const status = progressMap[sub.id]?.[topic.id];
-      result[topic.id] = calculateTopicMastery(topic.id, status, exams, studySessions);
+
+  YKS_SUBJECTS.forEach((subject) => {
+    subject.topics.forEach((topic) => {
+      const key = `${subject.id}:${topic.id}`;
+      result[key] = calculateTopicMastery(
+        subject.id,
+        topic.id,
+        progressMap[subject.id]?.[topic.id],
+        exams,
+        studySessions,
+        taskProgress
+      );
     });
   });
 

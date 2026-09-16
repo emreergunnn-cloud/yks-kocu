@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -11,10 +11,12 @@ import { computeAnalyticsSummary } from "@/services/analyticsService";
 import { getTopicProgress, SubjectProgressMap } from "@/services/topicService";
 import { ensureDailyNotifications } from "@/services/notificationService";
 import { getRecentStudySessions, StudySession } from "@/services/studyService";
+import { getStudyTaskProgress } from "@/services/studyTaskProgressService";
 import { getAllMasteries, MasteryResult } from "@/services/masteryEngine";
 import { useStreak } from "@/hooks/useStreak";
 
 import { ExamResult } from "@/types/exam";
+import type { StudyTaskProgressMap } from "@/types/studyTaskProgress";
 
 import { YKS_SUBJECTS } from "@/lib/constants/subjects";
 
@@ -41,6 +43,7 @@ export default function DashboardPage() {
   const [exams, setExams] = useState<ExamResult[]>([]);
   const [progressMap, setProgressMap] = useState<SubjectProgressMap>({});
   const [recentStudySessions, setRecentStudySessions] = useState<StudySession[]>([]);
+  const [taskProgress, setTaskProgress] = useState<StudyTaskProgressMap>({});
   const { streak } = useStreak();
 
   useEffect(() => {
@@ -58,11 +61,13 @@ export default function DashboardPage() {
       getExamResults(user.uid),
       getTopicProgress(user.uid),
       getRecentStudySessions(user.uid),
+      getStudyTaskProgress(user.uid),
     ])
-      .then(([data, pm, sessions]) => {
+      .then(([data, pm, sessions, taskData]) => {
         setExams(data);
         setProgressMap(pm);
         setRecentStudySessions(sessions);
+        setTaskProgress(taskData);
 
         const completed = YKS_SUBJECTS.reduce(
           (acc, subject) =>
@@ -101,8 +106,13 @@ export default function DashboardPage() {
 
 
   const masteries = useMemo(() => {
-    return getAllMasteries(progressMap, exams, recentStudySessions);
-  }, [progressMap, exams, recentStudySessions]);
+    return getAllMasteries(
+      progressMap,
+      exams,
+      recentStudySessions,
+      taskProgress
+    );
+  }, [progressMap, exams, recentStudySessions, taskProgress]);
 
   logToServer('info', "[DashboardPage] Loading condition check", { isLoading: authLoading || !userProfile });
   if (authLoading || !userProfile) {

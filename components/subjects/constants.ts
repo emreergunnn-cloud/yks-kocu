@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   TopicStatus,
 } from "@/types/topic";
 
@@ -38,7 +38,7 @@ export const STATUS_CONFIG:
     },
 
     "Çalışılıyor": {
-      label: "Çalışılıyor",
+      label: "Çalışıldı",
       color:
         "text-amber-600 dark:text-amber-400",
       bg:
@@ -58,7 +58,7 @@ export const STATUS_CONFIG:
     },
 
     "Tekrar Edilecek": {
-      label: "Tekrar",
+      label: "Eksik / Tekrar",
       color:
         "text-violet-600 dark:text-violet-400",
       bg:

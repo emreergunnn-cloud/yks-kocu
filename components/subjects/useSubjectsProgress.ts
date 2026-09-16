@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useCallback,
@@ -11,10 +11,13 @@ import {
 } from "@/context/AuthContext";
 
 import {
-  getTopicProgress,
   saveTopicStatus,
   type SubjectProgressMap,
 } from "@/services/topicService";
+
+import {
+  loadResolvedTopicProgress,
+} from "@/services/topicProgress/loadResolvedTopicProgress";
 
 import {
   getNextTopicStatus,
@@ -61,7 +64,7 @@ export function useSubjectsProgress() {
       setLoading(true);
 
       const progress =
-        await getTopicProgress(
+        await loadResolvedTopicProgress(
           uid
         );
 
