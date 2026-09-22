@@ -1,5 +1,5 @@
 import { Zap } from "lucide-react";
-import { YKS_SUBJECTS } from "../../../lib/constants/subjects";
+import { ALL_SUBJECTS } from "../../../lib/constants/curriculum/activeSubjects";
 import type { MasteryResult } from "../../../services/masteryEngine";
 
 const COLORS: Record<
@@ -38,7 +38,7 @@ interface TopicMeta {
   topic: string;
 }
 
-const TOPIC_META = YKS_SUBJECTS.reduce<Record<string, TopicMeta>>(
+const TOPIC_META = ALL_SUBJECTS.reduce<Record<string, TopicMeta>>(
   (result, subject) => {
     subject.topics.forEach((topic) => {
       result[`${subject.id}:${topic.id}`] = {

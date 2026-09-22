@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   SubjectProgressMap,
 } from "@/services/topicService";
 
@@ -8,6 +8,7 @@ import type {
 
 import type {
   AlanOption,
+  SinifOption,
 } from "@/types/user";
 
 import type {
@@ -32,6 +33,9 @@ interface Options {
   alan?:
     AlanOption | "";
 
+  sinif?:
+    SinifOption | "";
+
   days?: number;
 
   taskProgress?:
@@ -45,6 +49,7 @@ export function generateWeeklyStudyPlan({
   progressMap,
   dailyHours,
   alan = "",
+  sinif = "",
   days = 7,
   taskProgress = {},
   excludedTaskIds =
@@ -64,7 +69,8 @@ export function generateWeeklyStudyPlan({
       progressMap,
       alan,
       taskProgress,
-      excludedTaskIds
+      excludedTaskIds,
+      sinif
     );
 
   const usedIds =

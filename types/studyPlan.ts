@@ -3,11 +3,12 @@ import type {
 } from "@/services/topicService";
 
 import type {
-  YKS_SUBJECTS,
+  SubjectWithTopics,
 } from "@/lib/constants/subjects";
 
 import type {
   AlanOption,
+  SinifOption,
 } from "@/types/user";
 
 import type {
@@ -37,7 +38,7 @@ export type StudyTaskKind =
   | "carryover";
 
 export type StudyCategory =
-  (typeof YKS_SUBJECTS)[number]["category"];
+  SubjectWithTopics["category"];
 
 export type StudyAssignmentCounts =
   Record<string, number>;
@@ -89,6 +90,9 @@ export interface GeneratePlanOptions {
 
   alan?:
     AlanOption | "";
+
+  sinif?:
+    SinifOption | "";
 
   taskProgress?:
     StudyTaskProgressMap;

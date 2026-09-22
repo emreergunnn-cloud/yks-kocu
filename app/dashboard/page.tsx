@@ -18,7 +18,7 @@ import { useStreak } from "@/hooks/useStreak";
 import { ExamResult } from "@/types/exam";
 import type { StudyTaskProgressMap } from "@/types/studyTaskProgress";
 
-import { YKS_SUBJECTS } from "@/lib/constants/subjects";
+import { getActiveSubjects } from "@/lib/constants/curriculum/activeSubjects";
 
 import { YksCountdown } from "@/components/analytics/YksCountdown";
 
@@ -45,6 +45,10 @@ export default function DashboardPage() {
   const [recentStudySessions, setRecentStudySessions] = useState<StudySession[]>([]);
   const [taskProgress, setTaskProgress] = useState<StudyTaskProgressMap>({});
   const { streak } = useStreak();
+  const activeSubjects = useMemo(
+    () => getActiveSubjects(userProfile?.sinif ?? ""),
+    [userProfile?.sinif]
+  );
 
   useEffect(() => {
   if (!userProfile) return;
@@ -55,7 +59,7 @@ export default function DashboardPage() {
 }, [userProfile, router]);
 
   useEffect(() => {
-    if (!user?.uid) return;
+    if (!user?.uid || !userProfile) return;
 
     Promise.all([
       getExamResults(user.uid),
@@ -69,7 +73,7 @@ export default function DashboardPage() {
         setRecentStudySessions(sessions);
         setTaskProgress(taskData);
 
-        const completed = YKS_SUBJECTS.reduce(
+        const completed = activeSubjects.reduce(
           (acc, subject) =>
             acc +
             subject.topics.filter(
@@ -91,7 +95,7 @@ export default function DashboardPage() {
           error
         );
       });
-  }, [user]);
+  }, [user, userProfile, activeSubjects]);
 
   const summary = useMemo(() => {
     return computeAnalyticsSummary(
@@ -110,9 +114,10 @@ export default function DashboardPage() {
       progressMap,
       exams,
       recentStudySessions,
-      taskProgress
+      taskProgress,
+      activeSubjects
     );
-  }, [progressMap, exams, recentStudySessions, taskProgress]);
+  }, [progressMap, exams, recentStudySessions, taskProgress, activeSubjects]);
 
   logToServer('info', "[DashboardPage] Loading condition check", { isLoading: authLoading || !userProfile });
   if (authLoading || !userProfile) {

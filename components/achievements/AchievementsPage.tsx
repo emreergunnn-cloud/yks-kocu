@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   Trophy,
@@ -7,6 +7,10 @@ import {
 import {
   buildAchievementSummary,
 } from "./achievementEngine";
+
+import {
+  getActiveSubjects,
+} from "@/lib/constants/curriculum/activeSubjects";
 
 import {
   AchievementBadgeCard,
@@ -38,6 +42,11 @@ export function AchievementsPage() {
 
       longestStreak:
         data.longestStreak,
+
+      subjects:
+        getActiveSubjects(
+          data.sinif
+        ),
     });
 
   if (data.loading) {

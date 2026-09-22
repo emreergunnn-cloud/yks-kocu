@@ -1,0 +1,73 @@
+import { makeSchoolTopics } from "../../builders";
+
+export const G10_MATEMATIK = makeSchoolTopics([
+  ["m10_mat_trig_oran", "Dik Üçgende Trigonometrik Oranlar"],
+  ["m10_mat_trig_ozdeslik", "Trigonometrik Özdeşlikler"],
+  ["m10_mat_ucgen_eleman", "Üçgende Yardımcı Elemanlar"],
+  ["m10_mat_ucgen_alan", "Üçgenin Alanı"],
+  ["m10_mat_sinus_kosinus", "Sinüs ve Kosinüs Teoremleri"],
+  ["m10_mat_iki_kategorik", "İki Kategorik Değişkenli Veriler"],
+  ["m10_mat_asal_bolen", "Asal Çarpanlar ve Bölenler"],
+  ["m10_mat_ebob_ekok", "EBOB ve EKOK"],
+  ["m10_mat_bolunebilme", "Bölünebilme"],
+  ["m10_mat_fonksiyon", "Fonksiyon Olma Şartları"],
+  ["m10_mat_karesel", "Karesel Fonksiyonlar"],
+  ["m10_mat_karekok", "Karekök Fonksiyonu"],
+  ["m10_mat_rasyonel", "Rasyonel Fonksiyonlar"],
+  ["m10_mat_ters", "Fonksiyonların Tersleri"],
+  ["m10_mat_denklem", "Fonksiyonlarla Denklem ve Eşitsizlik Problemleri"],
+  ["m10_mat_sayma", "Sayma Stratejileri"],
+  ["m10_mat_algoritma", "Cebirsel ve Fonksiyonel İşlemlerin Algoritmik Yapısı"],
+  ["m10_mat_nokta", "Analitik Düzlemde Nokta"],
+  ["m10_mat_dogru", "Analitik Düzlemde Doğru"],
+  ["m10_mat_kosullu", "Koşullu Olasılık"],
+  ["m10_mat_bayes", "Bayes Teoremi"],
+]);
+
+export const G10_FIZIK = makeSchoolTopics([
+  ["m10_fiz_sabit_hiz", "Sabit Hızlı Hareket"],
+  ["m10_fiz_sabit_ivme", "Bir Boyutta Sabit İvmeli Hareket"],
+  ["m10_fiz_is_enerji_guc", "İş, Enerji ve Güç"],
+  ["m10_fiz_enerji_bicim", "Enerji Biçimleri ve Mekanik Enerji"],
+  ["m10_fiz_enerji_kaynak", "Enerji Kaynakları"],
+  ["m10_fiz_devre", "Basit Elektrik Devreleri ve Elektrik Akımı"],
+  ["m10_fiz_ohm", "Ohm Yasası"],
+  ["m10_fiz_direnc", "Dirençlerin Bağlanması"],
+  ["m10_fiz_uretec", "Üreteçlerin Bağlanması"],
+  ["m10_fiz_guvenlik", "Elektrik Güvenliği ve Topraklama"],
+  ["m10_fiz_periyodik", "Periyodik Hareketler"],
+  ["m10_fiz_dalga", "Dalgaların Temel Kavramları ve Sınıflandırılması"],
+  ["m10_fiz_dalga_surati", "Dalgaların Yayılma Sürati"],
+  ["m10_fiz_su_dalga", "Su Dalgalarında Yansıma ve Kırılma"],
+  ["m10_fiz_rezonans", "Rezonans ve Deprem"],
+]);
+
+export const G10_KIMYA = makeSchoolTopics([
+  ["m10_kim_degisim", "Kimyasal Değişim ve Tepkime Türleri"],
+  ["m10_kim_mol", "Mol Kavramı"],
+  ["m10_kim_denklem", "Tepkime Denklemleri ve Stokiyometri"],
+  ["m10_kim_gaz", "Gazlar ve Kinetik Moleküler Teori"],
+  ["m10_kim_gaz_yasa", "Gaz Yasaları ve İdeal Gaz"],
+  ["m10_kim_graham", "Graham Yasası"],
+  ["m10_kim_cozelti", "Çözeltiler ve Çözünme"],
+  ["m10_kim_cozunurluk", "Çözünürlük"],
+  ["m10_kim_derisim", "Derişim: Molarite ve ppm"],
+  ["m10_kim_koligatif", "Koligatif Özellikler"],
+  ["m10_kim_yesil", "Yeşil Kimya"],
+  ["m10_kim_atmosfer", "Atmosfer Tepkimeleri ve Küresel Sorunlar"],
+]);
+
+export const G10_BIYOLOJI = makeSchoolTopics([
+  ["m10_bio_atp", "ATP"],
+  ["m10_bio_fotosentez", "Fotosentez"],
+  ["m10_bio_kemosentez", "Kemosentez"],
+  ["m10_bio_sindirim", "Sindirim"],
+  ["m10_bio_solunum", "Hücresel Solunum"],
+  ["m10_bio_fermantasyon", "Fermantasyon"],
+  ["m10_bio_metabolizma", "Enerji ve Metabolizma"],
+  ["m10_bio_ekosistem", "Ekosistem Bileşenleri ve Etkileşimler"],
+  ["m10_bio_suksesyon", "Süksesyon ve Popülasyon"],
+  ["m10_bio_madde", "Enerji Akışı ve Madde Döngüleri"],
+  ["m10_bio_biyocesitlilik", "Biyoçeşitlilik ve Habitat Kaybı"],
+  ["m10_bio_surdurulebilir", "Sürdürülebilirlik ve Atık Yönetimi"],
+]);

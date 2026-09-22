@@ -11,6 +11,7 @@ export function generateStudyPlan({
   progressMap,
   dailyHours,
   alan = "",
+  sinif = "",
   taskProgress = {},
   excludedTaskIds =
     new Set<string>(),
@@ -35,7 +36,8 @@ export function generateStudyPlan({
       progressMap,
       alan,
       taskProgress,
-      excludedTaskIds
+      excludedTaskIds,
+      sinif
     );
 
   const selected:

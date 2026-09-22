@@ -3,7 +3,7 @@ import type {
 } from "@/services/topicService";
 
 import type {
-  YKS_SUBJECTS,
+  SubjectWithTopics,
 } from "@/lib/constants/subjects";
 
 import type {
@@ -16,7 +16,7 @@ export type StudyTaskType =
   | "weak";
 
 export type StudyCategory =
-  (typeof YKS_SUBJECTS)[number]["category"];
+  SubjectWithTopics["category"];
 
 export interface StudyTask {
   id: string;

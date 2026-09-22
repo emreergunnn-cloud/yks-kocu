@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useEffect,
@@ -23,7 +23,7 @@ import {
 } from "@/services/topicService";
 
 export function useAchievementsData() {
-  const { user } =
+  const { user, userProfile } =
     useAuth();
 
   const {
@@ -123,6 +123,9 @@ export function useAchievementsData() {
   return {
     progressMap,
     examCount,
+
+    sinif:
+      userProfile?.sinif ?? "",
 
     longestStreak:
       streak

@@ -1,5 +1,5 @@
-import {
-  YKS_SUBJECTS,
+import type {
+  SubjectWithTopics,
 } from "@/lib/constants/subjects";
 
 import {
@@ -27,8 +27,7 @@ import {
   buildStudyCandidate,
 } from "./buildStudyCandidate";
 
-type StudySubject =
-  (typeof YKS_SUBJECTS)[number];
+type StudySubject = SubjectWithTopics;
 
 interface Options {
   subject:

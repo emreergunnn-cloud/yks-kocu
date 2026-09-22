@@ -1,4 +1,4 @@
-import { YKS_SUBJECTS } from "../lib/constants/subjects";
+import { YKS_SUBJECTS, type SubjectWithTopics } from "../lib/constants/subjects";
 import type { ExamResult } from "../types/exam";
 import type { StudySession } from "./studyService";
 import type { SubjectProgressMap } from "./topicService";
@@ -169,11 +169,12 @@ export function getAllMasteries(
   progressMap: SubjectProgressMap,
   exams: ExamResult[],
   studySessions: StudySession[],
-  taskProgress: StudyTaskProgressMap = {}
+  taskProgress: StudyTaskProgressMap = {},
+  subjects: readonly SubjectWithTopics[] = YKS_SUBJECTS
 ): Record<string, MasteryResult> {
   const result: Record<string, MasteryResult> = {};
 
-  YKS_SUBJECTS.forEach((subject) => {
+  subjects.forEach((subject) => {
     subject.topics.forEach((topic) => {
       const key = `${subject.id}:${topic.id}`;
       result[key] = calculateTopicMastery(

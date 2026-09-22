@@ -1,11 +1,10 @@
-import type { YKS_SUBJECTS } from "@/lib/constants/subjects";
+import type { SubjectWithTopics } from "@/lib/constants/subjects";
 import type { AlanOption } from "@/types/user";
 
-export type YksSubject =
-  (typeof YKS_SUBJECTS)[number];
+export type StudySubject = SubjectWithTopics;
 
 export function isSubjectAllowedForTrack(
-  subject: YksSubject,
+  subject: StudySubject,
   alan: AlanOption | ""
 ): boolean {
   if (subject.category !== "AYT") {
