@@ -6,6 +6,8 @@ import type {
 import {
   getStudyPlanCandidates,
 } from "./candidateGenerator";
+import { isSchoolGrade } from "@/lib/constants/curriculum/config";
+import { getSchoolStudyPlanCandidates } from "./school/schoolPlan";
 
 export function generateStudyPlan({
   progressMap,
@@ -31,14 +33,9 @@ export function generateStudyPlan({
     return [];
   }
 
-  const candidates =
-    getStudyPlanCandidates(
-      progressMap,
-      alan,
-      taskProgress,
-      excludedTaskIds,
-      sinif
-    );
+  const candidates = isSchoolGrade(sinif)
+    ? getSchoolStudyPlanCandidates(sinif, progressMap, taskProgress, excludedTaskIds)
+    : getStudyPlanCandidates(progressMap, alan, taskProgress, excludedTaskIds, sinif);
 
   const selected:
     StudyTask[] = [];

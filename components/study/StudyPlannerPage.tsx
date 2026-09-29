@@ -67,6 +67,7 @@ export function StudyPlannerPage() {
         data.progressMap,
       dailyHours,
       alan: data.alan,
+      sinif: data.sinif,
       refreshKey,
     });
 
@@ -86,6 +87,7 @@ export function StudyPlannerPage() {
   return (
     <div className="p-4 md:p-6 space-y-5 max-w-5xl mx-auto">
       <StudyPlannerHeader
+        sinif={data.sinif}
         onRefresh={() =>
           setRefreshKey(
             (value) =>
@@ -118,6 +120,7 @@ export function StudyPlannerPage() {
           }
           uid={data.uid}
           alan={data.alan}
+          sinif={data.sinif}
         />
       ) : (
         <StudyPlannerSubjects

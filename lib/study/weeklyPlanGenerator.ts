@@ -23,6 +23,8 @@ import {
 import {
   getQuestionCount,
 } from "./questionCalculator";
+import { isSchoolGrade } from "@/lib/constants/curriculum/config";
+import { getSchoolStudyPlanCandidates } from "./school/schoolPlan";
 
 interface Options {
   progressMap:
@@ -64,14 +66,10 @@ export function generateWeeklyStudyPlan({
     return [];
   }
 
-  const candidates =
-    getStudyPlanCandidates(
-      progressMap,
-      alan,
-      taskProgress,
-      excludedTaskIds,
-      sinif
-    );
+  const schoolMode = isSchoolGrade(sinif);
+  const candidates = schoolMode
+    ? getSchoolStudyPlanCandidates(sinif, progressMap, taskProgress, excludedTaskIds)
+    : getStudyPlanCandidates(progressMap, alan, taskProgress, excludedTaskIds, sinif);
 
   const usedIds =
     new Set<string>();
@@ -125,11 +123,9 @@ export function generateWeeklyStudyPlan({
         durationMinutes:
           duration,
 
-        questionCount:
-          getQuestionCount(
-            duration,
-            candidate.type
-          ),
+        questionCount: schoolMode
+          ? Math.max(1, Math.round(candidate.questionCount * duration / candidate.durationMinutes))
+          : getQuestionCount(duration, candidate.type),
       });
 
       usedIds.add(

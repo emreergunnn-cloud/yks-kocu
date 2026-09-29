@@ -3,12 +3,17 @@ import {
   RefreshCw,
 } from "lucide-react";
 
+import type { SinifOption } from "@/types/user";
+import { isSchoolGrade } from "@/lib/constants/curriculum/config";
+
 interface Props {
   onRefresh: () => void;
+  sinif: SinifOption | "";
 }
 
 export function StudyPlannerHeader({
   onRefresh,
+  sinif,
 }: Props) {
   return (
     <header className="flex items-center justify-between gap-3">
@@ -19,9 +24,9 @@ export function StudyPlannerHeader({
         </h1>
 
         <p className="mt-1 text-sm text-slate-500">
-          Konu sırana, eksiklerine ve sınav
-          riskine göre oluşturulan çalışma
-          programı.
+          {isSchoolGrade(sinif)
+            ? `${sinif}. sınıf derslerini öğrenme, tekrar ve okul yazılılarına hazırlık planın.`
+            : "Konu sırana, eksiklerine ve sınav riskine göre oluşturulan çalışma programı."}
         </p>
       </div>
 

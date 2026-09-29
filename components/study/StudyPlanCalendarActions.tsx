@@ -6,6 +6,7 @@ import type {
 
 import type {
   AlanOption,
+  SinifOption,
 } from "@/types/user";
 
 import {
@@ -38,6 +39,7 @@ interface Props {
 
   alan:
     AlanOption | "";
+  sinif: SinifOption | "";
 }
 
 export function StudyPlanCalendarActions(

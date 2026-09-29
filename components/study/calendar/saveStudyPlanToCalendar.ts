@@ -1,9 +1,10 @@
-﻿import type {
+import type {
   StudyTask,
 } from "@/types/studyPlan";
 
 import type {
   AlanOption,
+  SinifOption,
 } from "@/types/user";
 
 import {
@@ -39,6 +40,7 @@ interface Options {
 
   alan:
     AlanOption | "";
+  sinif: SinifOption | "";
 
   mode:
     StudyPlanMode;
@@ -51,6 +53,7 @@ export async function saveStudyPlanToCalendar({
   tasks,
   dailyHours,
   alan,
+  sinif,
   mode,
   selectedDate,
 }: Options) {
@@ -118,6 +121,7 @@ export async function saveStudyPlanToCalendar({
       progressMap,
       dailyHours,
       alan,
+      sinif,
       days: 7,
       taskProgress,
       excludedTaskIds,

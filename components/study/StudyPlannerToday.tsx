@@ -6,7 +6,10 @@ import type {
 
 import type {
   AlanOption,
+  SinifOption,
 } from "@/types/user";
+import { isSchoolGrade } from "@/lib/constants/curriculum/config";
+import { SchoolStudyTaskList } from "./school/SchoolStudyTaskList";
 
 import {
   StudyDurationSelector,
@@ -46,6 +49,7 @@ interface Props {
 
   alan:
     AlanOption | "";
+  sinif: SinifOption | "";
 }
 
 export function StudyPlannerToday({
@@ -56,6 +60,7 @@ export function StudyPlannerToday({
   totalQuestions,
   uid,
   alan,
+  sinif,
 }: Props) {
   return (
     <div className="space-y-4">
@@ -82,12 +87,11 @@ export function StudyPlannerToday({
         <StudyPlanEmptyState />
       ) : (
         <>
-          <StudyPlanTaskListWithResources
-            uid={uid}
-            tasks={
-              studyPlan
-            }
-          />
+          {isSchoolGrade(sinif) ? (
+            <SchoolStudyTaskList tasks={studyPlan} />
+          ) : (
+            <StudyPlanTaskListWithResources uid={uid} tasks={studyPlan} />
+          )}
 
           {uid && (
             <StudyPlanCalendarActions
@@ -99,6 +103,7 @@ export function StudyPlannerToday({
                 dailyHours
               }
               alan={alan}
+              sinif={sinif}
             />
           )}
         </>

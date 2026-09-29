@@ -6,6 +6,7 @@ import type {
 
 import type {
   AlanOption,
+  SinifOption,
 } from "@/types/user";
 
 import {
@@ -34,6 +35,7 @@ interface Options {
 
   alan:
     AlanOption | "";
+  sinif: SinifOption | "";
 }
 
 export function useStudyPlanCalendarActions(

@@ -4,6 +4,7 @@ import type {
 
 import type {
   AlanOption,
+  SinifOption,
 } from "@/types/user";
 
 import type {
@@ -24,6 +25,7 @@ interface Options {
 
   alan:
     AlanOption | "";
+  sinif: SinifOption | "";
 
   mode:
     StudyPlanMode;

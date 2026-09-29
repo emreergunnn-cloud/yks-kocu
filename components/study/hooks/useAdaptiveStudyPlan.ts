@@ -24,6 +24,7 @@ import type {
 
 import type {
   AlanOption,
+  SinifOption,
 } from "@/types/user";
 
 import {
@@ -42,6 +43,7 @@ interface Options {
     AlanOption | "";
 
   refreshKey: number;
+  sinif: SinifOption | "";
 }
 
 export function useAdaptiveStudyPlan({
@@ -49,6 +51,7 @@ export function useAdaptiveStudyPlan({
   progressMap,
   dailyHours,
   alan,
+  sinif,
   refreshKey,
 }: Options) {
   const [
@@ -131,10 +134,11 @@ export function useAdaptiveStudyPlan({
 
   return useMemo(
     () =>
-      generateStudyPlan({
+      !sinif ? [] : generateStudyPlan({
         progressMap,
         dailyHours,
         alan,
+        sinif,
         taskProgress,
 
         excludedTaskIds:
@@ -144,6 +148,7 @@ export function useAdaptiveStudyPlan({
       progressMap,
       dailyHours,
       alan,
+      sinif,
       taskProgress,
       pendingTaskIds,
     ]

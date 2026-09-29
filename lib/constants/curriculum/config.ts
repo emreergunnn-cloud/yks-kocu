@@ -15,6 +15,12 @@ export const CURRICULUM_BY_GRADE: Record<
   Mezun: "yks",
 };
 
+export type SchoolGrade = Extract<SinifOption, "9" | "10" | "11">;
+
+export function isSchoolGrade(grade: SinifOption | ""): grade is SchoolGrade {
+  return grade === "9" || grade === "10" || grade === "11";
+}
+
 export function isYksGrade(
   grade: SinifOption | ""
 ) {

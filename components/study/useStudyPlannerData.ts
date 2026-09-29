@@ -18,13 +18,9 @@ import {
   getUserProfile,
 } from "@/services/userService";
 
-import {
-  YKS_SUBJECTS,
-} from "@/lib/constants/subjects";
+import { getActiveSubjects } from "@/lib/constants/curriculum/activeSubjects";
 
-import type {
-  AlanOption,
-} from "@/types/user";
+import type { AlanOption, SinifOption } from "@/types/user";
 
 export function useStudyPlannerData(
   refreshKey: number
@@ -36,6 +32,7 @@ export function useStudyPlannerData(
 
   const [alan, setAlan] =
     useState<AlanOption | "">("");
+  const [sinif, setSinif] = useState<SinifOption | "">("");
 
   const [loading, setLoading] =
     useState(true);
@@ -63,6 +60,7 @@ export function useStudyPlannerData(
 
         setProgressMap(progress);
         setAlan(profile?.alan ?? "");
+        setSinif(profile?.sinif ?? "");
       } catch (error) {
         console.error(
           "Çalışma planı verileri alınamadı:",
@@ -72,6 +70,7 @@ export function useStudyPlannerData(
         if (active) {
           setProgressMap({});
           setAlan("");
+          setSinif("");
         }
       } finally {
         if (active) {
@@ -89,7 +88,7 @@ export function useStudyPlannerData(
 
   const subjectStats = useMemo(
     () =>
-      YKS_SUBJECTS.map((subject) => ({
+      (sinif ? getActiveSubjects(sinif) : []).map((subject) => ({
         ...subject,
         stats: computeSubjectStats(
           subject.id,
@@ -97,7 +96,7 @@ export function useStudyPlannerData(
           progressMap
         ),
       })),
-    [progressMap]
+    [progressMap, sinif]
   );
 
   const overallCompleted =
@@ -124,6 +123,7 @@ export function useStudyPlannerData(
   return {
     progressMap,
     alan,
+    sinif,
     subjectStats,
     overallCompleted,
     overallTotal,

@@ -58,7 +58,7 @@ export function StudyPlannerSubjects({
         </div>
       </div>
 
-      {(["TYT", "AYT"] as const).map((category) => {
+      {[...new Set(subjectStats.map((subject) => subject.category))].map((category) => {
         const subjects = subjectStats.filter(
           (subject) =>
             subject.category === category
@@ -103,7 +103,7 @@ function SubjectRow({
   category,
 }: {
   subject: StudyPlannerSubjectsProps["subjectStats"][number];
-  category: "TYT" | "AYT";
+  category: string;
 }) {
   const {
     completed,
