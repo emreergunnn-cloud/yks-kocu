@@ -26,6 +26,7 @@ export function SubjectsPage() {
         onSearch={state.setSearch}
         onTab={state.setTab}
         onStatus={state.setStatusFilter}
+        showExamTabs={state.showExamTabs}
       />
       <SubjectsList
         subjects={state.subjects}

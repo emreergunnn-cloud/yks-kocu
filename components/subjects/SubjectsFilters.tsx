@@ -1,4 +1,4 @@
-﻿import {
+import {
   Search,
 } from "lucide-react";
 
@@ -30,6 +30,8 @@ interface Props {
       value:
         StatusFilter
     ) => void;
+
+  showExamTabs?: boolean;
 }
 
 export function SubjectsFilters({
@@ -39,6 +41,7 @@ export function SubjectsFilters({
   onSearch,
   onTab,
   onStatus,
+  showExamTabs = true,
 }: Props) {
   return (
     <>
@@ -63,38 +66,24 @@ export function SubjectsFilters({
           />
         </div>
 
-        <div className="flex gap-2">
-          {(
-            [
-              "all",
-              "TYT",
-              "AYT",
-            ] as SubjectTab[]
-          ).map(
-            (value) => (
+        {showExamTabs && (
+          <div className="flex gap-2">
+            {(["all", "TYT", "AYT"] as SubjectTab[]).map((value) => (
               <button
                 key={value}
                 type="button"
-                onClick={() =>
-                  onTab(
-                    value
-                  )
-                }
+                onClick={() => onTab(value)}
                 className={`rounded-xl px-3 py-2 text-sm font-medium ${
-                  tab ===
-                  value
+                  tab === value
                     ? "bg-blue-600 text-white"
                     : "border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
                 }`}
               >
-                {value ===
-                "all"
-                  ? "Tümü"
-                  : value}
+                {value === "all" ? "Tümü" : value}
               </button>
-            )
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
         <select
           value={status}
