@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { gradeRequiresAlan } from "@/lib/constants/curriculum/config";
+import { gradeRequiresAlan, isSchoolGrade } from "@/lib/constants/curriculum/config";
 import type { OnboardingData } from "./types";
 
 export function useOnboardingNavigation(data: OnboardingData) {
@@ -16,9 +16,17 @@ export function useOnboardingNavigation(data: OnboardingData) {
       alert(data.sinif === "11" ? "11. sınıf için Sayısal veya Eşit Ağırlık seçiniz." : "Alan seçiniz.");
       return false;
     }
-    if (step === 3 && (!data.hedefUniversite || !data.hedefBolum || !data.hedefSiralama)) {
-      alert("Hedef bilgilerini doldurun.");
-      return false;
+    if (step === 3) {
+      const hasAnyGoal = Boolean(data.hedefUniversite || data.hedefBolum || data.hedefSiralama);
+      const hasCompleteGoal = Boolean(data.hedefUniversite && data.hedefBolum && data.hedefSiralama);
+      if (!isSchoolGrade(data.sinif) && !hasCompleteGoal) {
+        alert("Hedef bilgilerini doldurun.");
+        return false;
+      }
+      if (isSchoolGrade(data.sinif) && hasAnyGoal && !hasCompleteGoal) {
+        alert("Hedef bilgilerini tamamlayın veya bu adımı atlayın.");
+        return false;
+      }
     }
     if (step === 4 && !data.diplomaNotu) { alert("Diploma notunu gir."); return false; }
     if (step === 5 && (!data.currentTYT || !data.currentAYT)) { alert("Netlerini gir."); return false; }

@@ -21,4 +21,6 @@ export type GoalStepProps = {
   setHedefSiralama: (value: string) => void;
   examYear: string;
   setExamYear: (value: string) => void;
+  canSkip?: boolean;
+  onSkip?: () => void;
 };

@@ -4,6 +4,7 @@ import { BookOpen, ExternalLink, PlayCircle, School } from "lucide-react";
 import { openExternalUrl } from "@/lib/native/openExternalUrl";
 import type { SchoolGrade } from "@/lib/constants/curriculum/config";
 import type { StudyTask } from "@/types/studyPlan";
+import { getSchoolBookRecommendations } from "./schoolBookRecommendations";
 
 interface Props {
   grade: SchoolGrade;
@@ -18,6 +19,7 @@ interface ResourceLink {
 
 export function SchoolStudyResources({ grade, task }: Props) {
   const query = `${grade}. sınıf ${task.subject} ${task.topic} 2026 Maarif Modeli konu anlatımı`;
+  const books = getSchoolBookRecommendations(grade, task.subject);
   const links: ResourceLink[] = [
     {
       label: "YouTube'da bu konu için video ara",
@@ -44,6 +46,19 @@ export function SchoolStudyResources({ grade, task }: Props) {
   return (
     <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-950/40">
       <p className="mb-2 text-xs font-semibold">{grade}. sınıf için çalışma kaynakları</p>
+      {books.length > 0 && (
+        <div className="mb-3 space-y-2">
+          {books.map((book) => (
+            <div key={book} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-200">
+              <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+              <div>
+                <p className="font-semibold">{book}</p>
+                <p className="text-[10px] text-slate-400">Önerilen yardımcı kaynak</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="space-y-2">
         {links.map(({ label, url, icon: Icon }) => (
           <button
@@ -61,8 +76,7 @@ export function SchoolStudyResources({ grade, task }: Props) {
         ))}
       </div>
       <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-        Video araması konuya göre yapılır; bağlantılar seçilmiş tek bir video garantisi vermez.
-        MEB arşivinde sınıfını ve güncel müfredatı kontrol et.
+        Yardımcı kaynak alırken 2026-2027 Maarif Modeli uyumlu güncel baskıyı kontrol et. Video araması konuya göre yapılır.
       </p>
     </div>
   );
