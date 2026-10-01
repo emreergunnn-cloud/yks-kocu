@@ -1,6 +1,8 @@
+import type { AlanOption, SinifOption } from "@/types/user";
+
 export interface OnboardingData {
-  sinif: string;
-  alan: string;
+  sinif: SinifOption | "";
+  alan: AlanOption | "";
   hedefUniversite: string;
   hedefBolum: string;
   hedefSiralama: string;

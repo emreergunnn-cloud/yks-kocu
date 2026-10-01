@@ -127,6 +127,9 @@ export function useAchievementsData() {
     sinif:
       userProfile?.sinif ?? "",
 
+    alan:
+      userProfile?.alan ?? "",
+
     longestStreak:
       streak
         ?.longestStreak ??

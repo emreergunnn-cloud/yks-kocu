@@ -34,7 +34,7 @@ export function generateStudyPlan({
   }
 
   const candidates = isSchoolGrade(sinif)
-    ? getSchoolStudyPlanCandidates(sinif, progressMap, taskProgress, excludedTaskIds)
+    ? getSchoolStudyPlanCandidates(sinif, alan, progressMap, taskProgress, excludedTaskIds)
     : getStudyPlanCandidates(progressMap, alan, taskProgress, excludedTaskIds, sinif);
 
   const selected:

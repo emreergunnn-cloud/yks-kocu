@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { saveUserProfile } from "@/services/userService";
 import type { AlanOption, SinifOption } from "@/types/user";
+import { normalizeAlanForGrade } from "@/lib/constants/curriculum/config";
 
 export function useProfileForm() {
   const auth = useAuth();
@@ -29,7 +30,8 @@ export function useProfileForm() {
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault(); if (!user) return; setSaving(true); setMsg(null);
     try {
-      await saveUserProfile({ uid: user.uid, adSoyad, email: user.email, photoURL: user.photoURL, sinif, alan, hedefUniversite, hedefBolum, hedefSiralama: Number(hedefSiralama) || 0, mezuniyetYili: Number(mezuniyetYili) || new Date().getFullYear() });
+      const savedAlan = normalizeAlanForGrade(sinif, alan);
+      await saveUserProfile({ uid: user.uid, adSoyad, email: user.email, photoURL: user.photoURL, sinif, alan: savedAlan, hedefUniversite, hedefBolum, hedefSiralama: Number(hedefSiralama) || 0, mezuniyetYili: Number(mezuniyetYili) || new Date().getFullYear() });
       await auth.refreshUserProfile();
       setMsg({ type: "success", text: "Profil ve hedef bilgileriniz başarıyla güncellendi." });
     } catch (error) {

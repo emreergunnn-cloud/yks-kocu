@@ -46,8 +46,8 @@ export default function DashboardPage() {
   const [taskProgress, setTaskProgress] = useState<StudyTaskProgressMap>({});
   const { streak } = useStreak();
   const activeSubjects = useMemo(
-    () => getActiveSubjects(userProfile?.sinif ?? ""),
-    [userProfile?.sinif]
+    () => getActiveSubjects(userProfile?.sinif ?? "", userProfile?.alan ?? ""),
+    [userProfile?.sinif, userProfile?.alan]
   );
 
   useEffect(() => {

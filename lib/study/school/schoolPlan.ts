@@ -1,5 +1,6 @@
 import { getActiveSubjects } from "@/lib/constants/curriculum/activeSubjects";
 import type { SchoolGrade } from "@/lib/constants/curriculum/config";
+import type { AlanOption } from "@/types/user";
 import type { SubjectProgressMap } from "@/services/topicService";
 import type { StudyTask } from "@/types/studyPlan";
 import type { StudyTaskProgressMap } from "@/types/studyTaskProgress";
@@ -7,11 +8,12 @@ import { makeSchoolCandidate } from "./schoolCandidate";
 
 export function getSchoolStudyPlanCandidates(
   grade: SchoolGrade,
+  alan: AlanOption | "",
   progressMap: SubjectProgressMap,
   taskProgress: StudyTaskProgressMap = {},
   excludedTaskIds: ReadonlySet<string> = new Set<string>()
 ): StudyTask[] {
-  const queues = getActiveSubjects(grade).map((subject) =>
+  const queues = getActiveSubjects(grade, alan).map((subject) =>
     subject.topics.map((topic) => makeSchoolCandidate({
       grade, subject, topic, progressMap, taskProgress,
     })).filter((task): task is StudyTask =>

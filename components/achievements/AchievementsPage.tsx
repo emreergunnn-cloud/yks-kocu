@@ -45,7 +45,8 @@ export function AchievementsPage() {
 
       subjects:
         getActiveSubjects(
-          data.sinif
+          data.sinif,
+          data.alan
         ),
     });
 

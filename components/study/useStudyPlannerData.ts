@@ -88,7 +88,7 @@ export function useStudyPlannerData(
 
   const subjectStats = useMemo(
     () =>
-      (sinif ? getActiveSubjects(sinif) : []).map((subject) => ({
+      (sinif ? getActiveSubjects(sinif, alan) : []).map((subject) => ({
         ...subject,
         stats: computeSubjectStats(
           subject.id,
@@ -96,7 +96,7 @@ export function useStudyPlannerData(
           progressMap
         ),
       })),
-    [progressMap, sinif]
+    [progressMap, sinif, alan]
   );
 
   const overallCompleted =

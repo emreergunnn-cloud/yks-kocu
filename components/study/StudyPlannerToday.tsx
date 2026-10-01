@@ -88,7 +88,7 @@ export function StudyPlannerToday({
       ) : (
         <>
           {isSchoolGrade(sinif) ? (
-            <SchoolStudyTaskList tasks={studyPlan} />
+            <SchoolStudyTaskList tasks={studyPlan} grade={sinif} />
           ) : (
             <StudyPlanTaskListWithResources uid={uid} tasks={studyPlan} />
           )}

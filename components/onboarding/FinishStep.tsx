@@ -45,7 +45,7 @@ export default function FinishStep({
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <InfoCard label="Alan" value={alan} />
+        {alan && <InfoCard label="Alan" value={alan} />}
         <InfoCard label="Sınıf" value={sinif} />
         <InfoCard label="TYT" value={currentTYT} />
         <InfoCard label="AYT" value={currentAYT} />

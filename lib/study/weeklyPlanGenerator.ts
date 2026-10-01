@@ -68,7 +68,7 @@ export function generateWeeklyStudyPlan({
 
   const schoolMode = isSchoolGrade(sinif);
   const candidates = schoolMode
-    ? getSchoolStudyPlanCandidates(sinif, progressMap, taskProgress, excludedTaskIds)
+    ? getSchoolStudyPlanCandidates(sinif, alan, progressMap, taskProgress, excludedTaskIds)
     : getStudyPlanCandidates(progressMap, alan, taskProgress, excludedTaskIds, sinif);
 
   const usedIds =

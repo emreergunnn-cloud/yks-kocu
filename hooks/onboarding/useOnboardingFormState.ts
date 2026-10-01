@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import type { AlanOption, SinifOption } from "@/types/user";
 import type { OnboardingData } from "./types";
 
 export function useOnboardingFormState() {
-  const [sinif, setSinif] = useState("");
-  const [alan, setAlan] = useState("");
+  const [sinif, setSinif] = useState<SinifOption | "">("");
+  const [alan, setAlan] = useState<AlanOption | "">("");
   const [hedefUniversite, setHedefUniversite] = useState("");
   const [hedefBolum, setHedefBolum] = useState("");
   const [hedefSiralama, setHedefSiralama] = useState("");
@@ -16,7 +17,11 @@ export function useOnboardingFormState() {
   const [studyDays, setStudyDays] = useState("");
   const [studyHours, setStudyHours] = useState("");
 
-  const data: OnboardingData = { sinif, alan, hedefUniversite, hedefBolum, hedefSiralama, examYear, diplomaNotu, currentTYT, currentAYT, studyDays, studyHours };
+  const data: OnboardingData = {
+    sinif, alan, hedefUniversite, hedefBolum, hedefSiralama,
+    examYear, diplomaNotu, currentTYT, currentAYT, studyDays, studyHours,
+  };
+
   return {
     data,
     sinif, setSinif, alan, setAlan,

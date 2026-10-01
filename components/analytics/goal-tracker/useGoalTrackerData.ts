@@ -27,7 +27,7 @@ export function useGoalTrackerData() {
 
   useEffect(() => {
     if (!user || !userProfile) return;
-    const subjects = getActiveSubjects(userProfile.sinif);
+    const subjects = getActiveSubjects(userProfile.sinif, userProfile.alan);
 
     Promise.all([
       getUserSettings(user.uid),
@@ -47,7 +47,7 @@ export function useGoalTrackerData() {
       setCompletedTopics(completed);
       setLoading(false);
     });
-  }, [user, userProfile?.sinif]);
+  }, [user, userProfile?.sinif, userProfile?.alan]);
 
   return { settings, studyStats, examCount, completedTopics, loading };
 }

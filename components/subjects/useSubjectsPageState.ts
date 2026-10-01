@@ -16,7 +16,11 @@ export function useSubjectsPageState() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const grade = userProfile?.sinif ?? "";
-  const activeSubjects = useMemo(() => getActiveSubjects(grade), [grade]);
+  const alan = userProfile?.alan ?? "";
+  const activeSubjects = useMemo(
+    () => getActiveSubjects(grade, alan),
+    [grade, alan]
+  );
   const showExamTabs = isYksGrade(grade);
 
   const subjects = useMemo(() => {
