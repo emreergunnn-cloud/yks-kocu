@@ -13,18 +13,13 @@ export default function GoalStep(props: GoalStepProps) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">Hedefini belirle</h2>
-        <p className={`mt-2 text-sm ${mutedTextClass}`}>Hedef üniversiteni ve bölümünü seç. ÖSYM verisindeki başarı sıralaması otomatik olarak hedef sıralamana aktarılır.{props.canSkip ? " Hedefin henüz yoksa bu adımı atlayabilirsin." : ""}</p>
+        <p className={`mt-2 text-sm ${mutedTextClass}`}>Hedef üniversiteni ve bölümünü seç. ÖSYM verisindeki başarı sıralaması otomatik olarak hedef sıralamana aktarılır.</p>
       </div>
       <div className="grid gap-5">
         <UniversityField value={state.universitySearch} loading={state.loading} selected={state.currentUniversity} results={state.filteredUniversities} onChange={state.changeUniversity} onSelect={state.selectUniversity} />
         <ProgramField universitySelected={Boolean(props.hedefUniversite)} value={state.programSearch} loading={state.loading} selected={state.selectedProgram} results={state.filteredPrograms} onChange={state.changeProgram} onSelect={state.selectProgram} />
         <GoalDetailsFields selectedProgram={state.selectedProgram} rank={props.hedefSiralama} setRank={props.setHedefSiralama} examYear={props.examYear} setExamYear={props.setExamYear} />
         {state.error && <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-400">{state.error}</div>}
-        {props.canSkip && props.onSkip && (
-          <button type="button" onClick={props.onSkip} className="rounded-xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">
-            Şimdilik hedefim yok — Atla
-          </button>
-        )}
       </div>
     </div>
   );
