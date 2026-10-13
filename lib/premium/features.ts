@@ -43,9 +43,9 @@ export const PREMIUM_FEATURES: readonly PremiumFeatureDefinition[] = [
   {
     id: "advanced_analytics",
     title: "Gelişmiş analizler",
-    description: "Uzun dönem, ders bazlı ve daha ayrıntılı gelişim analizi.",
+    description: "Son dönem değişimleri, ders öncelikleri ve hedef farkı analizi.",
     requiredPlan: "premium",
-    status: "planned",
+    status: "active",
   },
   {
     id: "weekly_report",

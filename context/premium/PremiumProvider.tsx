@@ -57,8 +57,12 @@ export function PremiumProvider({ children }: { children: React.ReactNode }) {
     isPremium: entitlement.plan === "premium" && entitlement.active,
     loading,
     canPreview,
-    canAccess: (feature: PremiumFeature) =>
-      hasFeatureAccess(feature, entitlement.plan),
+    canAccess: (feature: PremiumFeature) => {
+      const effectivePlan = entitlement.plan === "premium" && entitlement.active
+        ? "premium"
+        : "free";
+      return hasFeatureAccess(feature, effectivePlan);
+    },
     refresh,
     setPreviewPlan,
   }), [canPreview, entitlement, loading, refresh, setPreviewPlan]);

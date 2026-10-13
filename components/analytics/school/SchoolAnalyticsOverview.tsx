@@ -1,8 +1,11 @@
 "use client";
 
+import { PremiumGate } from "@/components/premium/PremiumGate";
 import { Card } from "@/components/ui/Card";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import type { UserProfile } from "@/types/user";
+import { PremiumAnalyticsLocked } from "../premium/PremiumAnalyticsLocked";
+import { SchoolAdvancedAnalytics } from "../premium/SchoolAdvancedAnalytics";
 import { SchoolSubjectProgress } from "./SchoolSubjectProgress";
 import { useSchoolAnalytics } from "./useSchoolAnalytics";
 
@@ -37,6 +40,10 @@ export function SchoolAnalyticsOverview({ uid, profile }: Props) {
         <StudyMetric label="Bu Hafta" minutes={studyStats.weekMinutes} sessions={studyStats.weekSessions} />
         <StudyMetric label="Bu Ay" minutes={studyStats.monthMinutes} sessions={studyStats.monthSessions} />
       </Card>
+
+      <PremiumGate feature="advanced_analytics" fallback={<PremiumAnalyticsLocked />}>
+        <SchoolAdvancedAnalytics summary={summary} studyStats={studyStats} />
+      </PremiumGate>
     </div>
   );
 }

@@ -34,5 +34,5 @@ export function useAnalyticsPageData() {
     [exams, userProfile]
   );
 
-  return { uid: user?.uid ?? null, userProfile, summary, loading };
+  return { uid: user?.uid ?? null, userProfile, exams, summary, loading };
 }
