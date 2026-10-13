@@ -6,7 +6,7 @@ export interface NavGroup { label: string; items: NavItem[]; }
 
 export const navGroups: NavGroup[] = [
   { label: "Ana Sayfa", items: [
-    { name: "Dashboard", href: "/dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
+    { name: "Ana Sayfa", href: "/dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
     { name: "Analizler", href: "/analytics", icon: <BarChart2 className="h-4 w-4" /> },
   ]},
   { label: "Çalışma", items: [
