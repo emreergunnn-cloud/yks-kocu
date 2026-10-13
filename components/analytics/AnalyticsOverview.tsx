@@ -1,50 +1,32 @@
 "use client";
 
-import {
-  LoadingSpinner,
-} from "@/components/ui/LoadingSpinner";
-
-import {
-  AnalyticsCharts,
-} from "./AnalyticsCharts";
-
-import {
-  AnalyticsGapsSection,
-} from "./gaps/AnalyticsGapsSection";
-
-import {
-  useAnalyticsPageData,
-} from "./hooks/useAnalyticsPageData";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { isSchoolGrade } from "@/lib/constants/curriculum/config";
+import { AnalyticsCharts } from "./AnalyticsCharts";
+import { AnalyticsGapsSection } from "./gaps/AnalyticsGapsSection";
+import { useAnalyticsPageData } from "./hooks/useAnalyticsPageData";
+import { SchoolAnalyticsOverview } from "./school/SchoolAnalyticsOverview";
 
 export function AnalyticsOverview() {
-  const analytics =
-    useAnalyticsPageData();
-
-  if (analytics.loading) {
-    return (
-      <LoadingSpinner text="İstatistikler hesaplanıyor..." />
-    );
+  const analytics = useAnalyticsPageData();
+  if (!analytics.userProfile || analytics.loading) {
+    return <LoadingSpinner text="İstatistikler hesaplanıyor..." />;
   }
+
+  const schoolMode = isSchoolGrade(analytics.userProfile.sinif);
 
   return (
     <>
-      <AnalyticsCharts
-        summary={
-          analytics.summary
-        }
-        targetRanking={
-          analytics.userProfile
-            ?.hedefSiralama
-        }
-        targetDepartment={
-          analytics.userProfile
-            ?.hedefBolum
-        }
-      />
-
-      <AnalyticsGapsSection
-        uid={analytics.uid}
-      />
+      {schoolMode ? (
+        <SchoolAnalyticsOverview uid={analytics.uid} profile={analytics.userProfile} />
+      ) : (
+        <AnalyticsCharts
+          summary={analytics.summary}
+          targetRanking={analytics.userProfile.hedefSiralama}
+          targetDepartment={analytics.userProfile.hedefBolum}
+        />
+      )}
+      <AnalyticsGapsSection uid={analytics.uid} />
     </>
   );
 }

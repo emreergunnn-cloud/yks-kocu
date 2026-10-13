@@ -1,88 +1,38 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-
-import {
-  useAuth,
-} from "@/context/AuthContext";
-
-import {
-  getExamResults,
-} from "@/services/examService";
-
-import {
-  computeAnalyticsSummary,
-} from "@/services/analyticsService";
-
-import type {
-  ExamResult,
-} from "@/types/exam";
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { isYksGrade } from "@/lib/constants/curriculum/config";
+import { computeAnalyticsSummary } from "@/services/analyticsService";
+import { getExamResults } from "@/services/examService";
+import type { ExamResult } from "@/types/exam";
 
 export function useAnalyticsPageData() {
-  const {
-    user,
-    userProfile,
-  } = useAuth();
-
-  const [
-    exams,
-    setExams,
-  ] =
-    useState<ExamResult[]>(
-      []
-    );
-
-  const [
-    loading,
-    setLoading,
-  ] =
-    useState(true);
+  const { user, userProfile } = useAuth();
+  const [exams, setExams] = useState<ExamResult[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user?.uid) {
+    if (!user?.uid || !userProfile || !isYksGrade(userProfile.sinif)) {
       setExams([]);
       setLoading(false);
       return;
     }
 
+    let active = true;
     setLoading(true);
-
     getExamResults(user.uid)
-      .then(setExams)
-      .catch((error) =>
-        console.error(
-          "Analytics yüklenemedi:",
-          error
-        )
-      )
-      .finally(() =>
-        setLoading(false)
-      );
-  }, [user?.uid]);
+      .then((results) => active && setExams(results))
+      .catch((error) => console.error("Analytics yüklenemedi:", error))
+      .finally(() => active && setLoading(false));
 
-  const summary =
-    useMemo(
-      () =>
-        computeAnalyticsSummary(
-          exams,
-          userProfile
-        ),
-      [
-        exams,
-        userProfile,
-      ]
-    );
+    return () => { active = false; };
+  }, [user?.uid, userProfile?.sinif]);
 
-  return {
-    uid:
-      user?.uid ?? null,
+  const summary = useMemo(
+    () => computeAnalyticsSummary(exams, userProfile),
+    [exams, userProfile]
+  );
 
-    userProfile,
-    summary,
-    loading,
-  };
+  return { uid: user?.uid ?? null, userProfile, summary, loading };
 }
